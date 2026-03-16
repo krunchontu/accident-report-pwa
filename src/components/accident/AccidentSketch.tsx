@@ -1,8 +1,11 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Undo2, Trash2, Pencil, Car, X, MoveRight } from 'lucide-react';
+import { Undo2, Trash2, Pencil, Car, X, Navigation, MousePointer2 } from 'lucide-react';
 import { StepWizard } from '../layout/StepWizard';
 import { useAccidentStore } from '../../store/useAccidentStore';
+import { renderCanvas, drawArrow, hitTest } from '../../utils/sketchRenderer';
+import type { SketchElement, ToolType } from '../../types/sketch';
+import { CAR_PALETTE } from '../../types/sketch';
 
 const TEMPLATES = [
   { id: 'straight2', label: '2-Lane Road' },
@@ -13,135 +16,29 @@ const TEMPLATES = [
   { id: 'blank', label: 'Blank' },
 ];
 
-type Tool = 'pen' | 'carA' | 'carB' | 'arrow' | 'xmarker';
-
-function drawTemplate(ctx: CanvasRenderingContext2D, template: string, w: number, h: number) {
-  ctx.fillStyle = '#f0f0f0';
-  ctx.fillRect(0, 0, w, h);
-  ctx.strokeStyle = '#ccc';
-  ctx.lineWidth = 1;
-
-  ctx.fillStyle = '#888';
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 2;
-
-  const cx = w / 2, cy = h / 2;
-  const roadW = 80;
-
-  if (template === 'straight2' || template === 'straight4') {
-    const lanes = template === 'straight2' ? 2 : 4;
-    const totalW = roadW * lanes / 2;
-    ctx.fillStyle = '#ddd';
-    ctx.fillRect(cx - totalW, 0, totalW * 2, h);
-    ctx.setLineDash([10, 10]);
-    ctx.strokeStyle = '#fff';
-    for (let i = 1; i < lanes; i++) {
-      const x = cx - totalW + (totalW * 2 / lanes) * i;
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-    }
-    ctx.setLineDash([]);
-    ctx.strokeStyle = '#aaa';
-    ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(cx - totalW, 0); ctx.lineTo(cx - totalW, h); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx + totalW, 0); ctx.lineTo(cx + totalW, h); ctx.stroke();
-  } else if (template === 'tjunction') {
-    ctx.fillStyle = '#ddd';
-    ctx.fillRect(0, cy - roadW, w, roadW * 2);
-    ctx.fillRect(cx - roadW, cy - roadW, roadW * 2, h - cy + roadW);
-    ctx.setLineDash([10, 10]); ctx.strokeStyle = '#fff';
-    ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(w, cy); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, h); ctx.stroke();
-    ctx.setLineDash([]);
-  } else if (template === 'cross') {
-    ctx.fillStyle = '#ddd';
-    ctx.fillRect(0, cy - roadW, w, roadW * 2);
-    ctx.fillRect(cx - roadW, 0, roadW * 2, h);
-    ctx.setLineDash([10, 10]); ctx.strokeStyle = '#fff';
-    ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(w, cy); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, h); ctx.stroke();
-    ctx.setLineDash([]);
-  } else if (template === 'roundabout') {
-    ctx.fillStyle = '#ddd';
-    ctx.fillRect(0, cy - roadW, w, roadW * 2);
-    ctx.fillRect(cx - roadW, 0, roadW * 2, h);
-    ctx.fillStyle = '#f0f0f0';
-    ctx.beginPath(); ctx.arc(cx, cy, roadW * 1.2, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#aaa'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(cx, cy, roadW * 1.2, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = '#e0e0e0';
-    ctx.beginPath(); ctx.arc(cx, cy, roadW * 0.5, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#aaa';
-    ctx.beginPath(); ctx.arc(cx, cy, roadW * 0.5, 0, Math.PI * 2); ctx.stroke();
-  }
-}
-
-function drawCarShape(ctx: CanvasRenderingContext2D, x: number, y: number, color: string, label: string) {
-  const w = 24, h = 44;
-  ctx.save();
-  // Car body
-  ctx.fillStyle = color;
-  ctx.strokeStyle = '#1B2A4A';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.roundRect(x - w / 2, y - h / 2, w, h, 5);
-  ctx.fill();
-  ctx.stroke();
-  // Windscreen
-  ctx.fillStyle = 'rgba(255,255,255,0.6)';
-  ctx.fillRect(x - w / 2 + 3, y - h / 2 + 6, w - 6, 8);
-  // Rear window
-  ctx.fillRect(x - w / 2 + 3, y + h / 2 - 14, w - 6, 8);
-  // Label
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 10px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(label, x, y);
-  ctx.restore();
-}
-
-function drawXMarker(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  const s = 10;
-  ctx.save();
-  ctx.strokeStyle = '#dc2626';
-  ctx.lineWidth = 3;
-  ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(x - s, y - s); ctx.lineTo(x + s, y + s); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x + s, y - s); ctx.lineTo(x - s, y + s); ctx.stroke();
-  ctx.restore();
-}
-
-function drawArrow(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number) {
-  const headLen = 12;
-  const angle = Math.atan2(y2 - y1, x2 - x1);
-  ctx.save();
-  ctx.strokeStyle = '#1B2A4A';
-  ctx.lineWidth = 3;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.stroke();
-  // Arrowhead
-  ctx.beginPath();
-  ctx.moveTo(x2, y2);
-  ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
-  ctx.moveTo(x2, y2);
-  ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
-  ctx.stroke();
-  ctx.restore();
-}
+const MIN_ARROW_DISTANCE = 20;
 
 export function AccidentSketch() {
   const navigate = useNavigate();
   const { currentIncident, setSketch } = useAccidentStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [template, setTemplate] = useState('straight2');
+  const [tool, setTool] = useState<ToolType>('pen');
+  const [elements, setElements] = useState<SketchElement[]>([]);
+  const [undoStack, setUndoStack] = useState<SketchElement[][]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [history, setHistory] = useState<ImageData[]>([]);
-  const [hasDrawn, setHasDrawn] = useState(false);
-  const [tool, setTool] = useState<Tool>('pen');
   const drawStartRef = useRef<{ x: number; y: number } | null>(null);
+  const penPointsRef = useRef<{ x: number; y: number }[]>([]);
+  const backgroundImgRef = useRef<HTMLImageElement | null>(null);
+  const [arrowPreview, setArrowPreview] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
+
+  // Derive available car tools from otherParties
+  const partyCount = currentIncident?.otherParties?.length ?? 0;
+  const carCount = Math.max(2, partyCount + 1); // minimum 2 cars (A + B)
+  const availableCars = CAR_PALETTE.slice(0, Math.min(carCount, CAR_PALETTE.length));
+
+  const canvasSize = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
 
   const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -151,20 +48,34 @@ export function AccidentSketch() {
     const rect = canvas.parentElement!.getBoundingClientRect();
     canvas.width = rect.width;
     canvas.height = Math.min(rect.width * 1.2, 500);
-    drawTemplate(ctx, template, canvas.width, canvas.height);
-    if (currentIncident?.sketchDataUrl) {
+    canvasSize.current = { w: canvas.width, h: canvas.height };
+
+    // Load existing sketch as background if reopening
+    if (currentIncident?.sketchDataUrl && !backgroundImgRef.current) {
       const img = new Image();
       img.onload = () => {
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        setHistory([ctx.getImageData(0, 0, canvas.width, canvas.height)]);
+        backgroundImgRef.current = img;
+        renderCanvas(ctx, canvas.width, canvas.height, template, elements, selectedId, img);
       };
       img.src = currentIncident.sketchDataUrl;
     } else {
-      setHistory([ctx.getImageData(0, 0, canvas.width, canvas.height)]);
+      renderCanvas(ctx, canvas.width, canvas.height, template, elements, selectedId, backgroundImgRef.current);
     }
-  }, [template, currentIncident?.sketchDataUrl]);
+  }, [template, currentIncident?.sketchDataUrl, elements, selectedId]);
 
   useEffect(() => { initCanvas(); }, [initCanvas]);
+
+  // Re-render canvas when elements, selection, or arrow preview change
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+    renderCanvas(ctx, canvas.width, canvas.height, template, elements, selectedId, backgroundImgRef.current);
+    // Draw arrow preview on top
+    if (arrowPreview) {
+      drawArrow(ctx, arrowPreview.x1, arrowPreview.y1, arrowPreview.x2, arrowPreview.y2, { dashed: true, alpha: 0.5 });
+    }
+  }, [elements, selectedId, template, arrowPreview]);
 
   if (!currentIncident) { navigate('/'); return null; }
 
@@ -177,83 +88,154 @@ export function AccidentSketch() {
     return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
   };
 
-  const saveSnapshot = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (canvas && ctx) {
-      setHistory(prev => [...prev, ctx.getImageData(0, 0, canvas.width, canvas.height)]);
-    }
+  const pushUndo = () => {
+    setUndoStack(prev => [...prev, elements]);
+  };
+
+  const addElement = (el: SketchElement) => {
+    pushUndo();
+    setElements(prev => [...prev, el]);
+    setSelectedId(null);
   };
 
   const startDraw = (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
     const { x, y } = getPos(e);
 
-    if (tool === 'carA' || tool === 'carB' || tool === 'xmarker') {
-      // Stamp tools: place immediately on tap
-      const ctx = canvasRef.current?.getContext('2d');
-      if (!ctx) return;
-      setHasDrawn(true);
-      if (tool === 'carA') drawCarShape(ctx, x, y, '#2563eb', 'A');
-      else if (tool === 'carB') drawCarShape(ctx, x, y, '#dc2626', 'B');
-      else drawXMarker(ctx, x, y);
-      saveSnapshot();
+    // Select tool: hit test
+    if (tool === 'select') {
+      const hit = hitTest(x, y, elements);
+      setSelectedId(hit?.id ?? null);
       return;
     }
 
+    // Car tools: stamp immediately
+    if (tool.startsWith('car-')) {
+      const label = tool.slice(4); // 'car-A' -> 'A'
+      const palette = CAR_PALETTE.find(c => c.label === label);
+      if (!palette) return;
+      addElement({
+        id: crypto.randomUUID(),
+        type: 'car',
+        x, y,
+        label: palette.label,
+        color: palette.color,
+      });
+      return;
+    }
+
+    // Impact marker: stamp immediately
+    if (tool === 'xmarker') {
+      addElement({ id: crypto.randomUUID(), type: 'xmarker', x, y });
+      return;
+    }
+
+    // Arrow: start drag
     if (tool === 'arrow') {
       drawStartRef.current = { x, y };
       setIsDrawing(true);
-      setHasDrawn(true);
+      setSelectedId(null);
       return;
     }
 
-    // Pen tool
+    // Pen: start stroke
     setIsDrawing(true);
-    setHasDrawn(true);
-    const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx) return;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.strokeStyle = '#1B2A4A';
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+    setSelectedId(null);
+    penPointsRef.current = [{ x, y }];
   };
 
   const draw = (e: React.TouchEvent | React.MouseEvent) => {
-    if (!isDrawing || tool !== 'pen') return;
+    if (!isDrawing) return;
     e.preventDefault();
-    const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx) return;
     const { x, y } = getPos(e);
-    ctx.lineTo(x, y);
-    ctx.stroke();
+
+    if (tool === 'pen') {
+      penPointsRef.current.push({ x, y });
+      // Live pen drawing: render all elements + current stroke
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext('2d');
+      if (!canvas || !ctx) return;
+      renderCanvas(ctx, canvas.width, canvas.height, template, elements, selectedId, backgroundImgRef.current);
+      // Draw in-progress stroke
+      const pts = penPointsRef.current;
+      if (pts.length >= 2) {
+        ctx.save();
+        ctx.strokeStyle = '#1B2A4A';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length; i++) {
+          ctx.lineTo(pts[i].x, pts[i].y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+      return;
+    }
+
+    if (tool === 'arrow' && drawStartRef.current) {
+      setArrowPreview({ x1: drawStartRef.current.x, y1: drawStartRef.current.y, x2: x, y2: y });
+      return;
+    }
   };
 
   const endDraw = (e?: React.TouchEvent | React.MouseEvent) => {
     if (!isDrawing) return;
     setIsDrawing(false);
+    setArrowPreview(null);
 
     if (tool === 'arrow' && drawStartRef.current && e) {
-      const ctx = canvasRef.current?.getContext('2d');
-      if (ctx) {
-        const { x, y } = getPos(e);
-        drawArrow(ctx, drawStartRef.current.x, drawStartRef.current.y, x, y);
+      const { x, y } = getPos(e);
+      const dx = x - drawStartRef.current.x;
+      const dy = y - drawStartRef.current.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist >= MIN_ARROW_DISTANCE) {
+        addElement({
+          id: crypto.randomUUID(),
+          type: 'arrow',
+          x1: drawStartRef.current.x, y1: drawStartRef.current.y,
+          x2: x, y2: y,
+        });
       }
       drawStartRef.current = null;
+      return;
     }
 
-    saveSnapshot();
+    if (tool === 'pen' && penPointsRef.current.length >= 2) {
+      addElement({
+        id: crypto.randomUUID(),
+        type: 'penStroke',
+        points: [...penPointsRef.current],
+      });
+      penPointsRef.current = [];
+      return;
+    }
   };
 
   const undo = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx || history.length <= 1) return;
-    const newHistory = history.slice(0, -1);
-    ctx.putImageData(newHistory[newHistory.length - 1], 0, 0);
-    setHistory(newHistory);
+    if (undoStack.length === 0) return;
+    const prev = undoStack[undoStack.length - 1];
+    setUndoStack(s => s.slice(0, -1));
+    setElements(prev);
+    setSelectedId(null);
+  };
+
+  const deleteSelected = () => {
+    if (!selectedId) return;
+    pushUndo();
+    setElements(prev => prev.filter(el => el.id !== selectedId));
+    setSelectedId(null);
+  };
+
+  const clearAll = () => {
+    if (elements.length === 0 && !backgroundImgRef.current) return;
+    if (!window.confirm('Clear your drawing?')) return;
+    pushUndo();
+    setElements([]);
+    setSelectedId(null);
+    backgroundImgRef.current = null;
   };
 
   const handleSave = () => {
@@ -264,13 +246,36 @@ export function AccidentSketch() {
     navigate('/accident/injuries');
   };
 
-  const tools: { id: Tool; label: string; icon: React.ReactNode }[] = [
+  // Build tool palette
+  const fixedTools: { id: ToolType; label: string; icon: React.ReactNode }[] = [
+    { id: 'select', label: 'Select', icon: <MousePointer2 size={14} /> },
     { id: 'pen', label: 'Pen', icon: <Pencil size={14} /> },
-    { id: 'carA', label: 'Car A', icon: <Car size={14} /> },
-    { id: 'carB', label: 'Car B', icon: <Car size={14} /> },
-    { id: 'arrow', label: 'Arrow', icon: <MoveRight size={14} /> },
+  ];
+
+  const carTools = availableCars.map(c => ({
+    id: `car-${c.label}` as ToolType,
+    label: `Car ${c.label}`,
+    icon: <Car size={14} />,
+    color: c.color,
+  }));
+
+  const otherTools: { id: ToolType; label: string; icon: React.ReactNode }[] = [
+    { id: 'arrow', label: 'Direction', icon: <Navigation size={14} /> },
     { id: 'xmarker', label: 'Impact', icon: <X size={14} /> },
   ];
+
+  const getHelpText = () => {
+    if (tool === 'select') return 'Tap an element to select it, then delete or move it';
+    if (tool === 'pen') return 'Draw with your finger to sketch the accident scene';
+    if (tool === 'arrow') return 'Drag to show a vehicle\'s direction of travel';
+    if (tool === 'xmarker') return 'Tap the canvas to mark the point of impact';
+    if (tool.startsWith('car-')) {
+      const label = tool.slice(4);
+      const palette = CAR_PALETTE.find(c => c.label === label);
+      if (palette) return `Tap the canvas to place Car ${label} (${palette.description})`;
+    }
+    return '';
+  };
 
   return (
     <StepWizard currentStep={6} totalSteps={8} stepLabel="Accident Sketch" onNext={handleSave}>
@@ -279,8 +284,11 @@ export function AccidentSketch() {
         <div className="flex gap-2 overflow-x-auto pb-2">
           {TEMPLATES.map(t => (
             <button key={t.id} onClick={() => {
-                if (hasDrawn && !window.confirm('Changing the template will clear your drawing. Continue?')) return;
-                setHasDrawn(false);
+                if ((elements.length > 0 || backgroundImgRef.current) && !window.confirm('Changing the template will clear your drawing. Continue?')) return;
+                setElements([]);
+                setUndoStack([]);
+                setSelectedId(null);
+                backgroundImgRef.current = null;
                 setTemplate(t.id);
               }}
               className={`px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap border-2 transition-colors ${template === t.id ? 'border-navy bg-navy text-white' : 'border-gray-200 bg-white'}`}>
@@ -290,10 +298,27 @@ export function AccidentSketch() {
         </div>
 
         {/* Tool palette */}
-        <div className="flex gap-1.5">
-          {tools.map(t => (
-            <button key={t.id} onClick={() => setTool(t.id)}
-              className={`flex-1 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 border-2 transition-colors ${
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
+          {fixedTools.map(t => (
+            <button key={t.id} onClick={() => { setTool(t.id); if (t.id !== 'select') setSelectedId(null); }}
+              className={`py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-1 border-2 transition-colors whitespace-nowrap ${
+                tool === t.id ? 'border-navy bg-navy text-white' : 'border-gray-200 bg-white text-gray-700'
+              }`}>
+              {t.icon} {t.label}
+            </button>
+          ))}
+          {carTools.map(t => (
+            <button key={t.id} onClick={() => { setTool(t.id); setSelectedId(null); }}
+              className={`py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-1 border-2 transition-colors whitespace-nowrap ${
+                tool === t.id ? 'border-navy bg-navy text-white' : 'border-gray-200 bg-white text-gray-700'
+              }`}>
+              <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: t.color }} />
+              {t.label}
+            </button>
+          ))}
+          {otherTools.map(t => (
+            <button key={t.id} onClick={() => { setTool(t.id); setSelectedId(null); }}
+              className={`py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-1 border-2 transition-colors whitespace-nowrap ${
                 tool === t.id ? 'border-navy bg-navy text-white' : 'border-gray-200 bg-white text-gray-700'
               }`}>
               {t.icon} {t.label}
@@ -312,24 +337,25 @@ export function AccidentSketch() {
 
         {/* Controls */}
         <div className="flex gap-2">
-          <button onClick={undo} className="flex-1 py-3 bg-white border-2 border-gray-200 rounded-xl font-medium flex items-center justify-center gap-2 text-sm">
+          <button onClick={undo} disabled={undoStack.length === 0}
+            className="flex-1 py-3 bg-white border-2 border-gray-200 rounded-xl font-medium flex items-center justify-center gap-2 text-sm disabled:opacity-40">
             <Undo2 size={16} /> Undo
           </button>
-          <button onClick={() => {
-              if (hasDrawn && !window.confirm('Clear your drawing?')) return;
-              setHasDrawn(false);
-              initCanvas();
-            }} className="flex-1 py-3 bg-white border-2 border-gray-200 rounded-xl font-medium flex items-center justify-center gap-2 text-sm">
-            <Trash2 size={16} /> Clear
-          </button>
+          {selectedId ? (
+            <button onClick={deleteSelected}
+              className="flex-1 py-3 bg-red-50 border-2 border-red-200 rounded-xl font-medium flex items-center justify-center gap-2 text-sm text-red-600">
+              <Trash2 size={16} /> Delete Selected
+            </button>
+          ) : (
+            <button onClick={clearAll} disabled={elements.length === 0 && !backgroundImgRef.current}
+              className="flex-1 py-3 bg-white border-2 border-gray-200 rounded-xl font-medium flex items-center justify-center gap-2 text-sm disabled:opacity-40">
+              <Trash2 size={16} /> Clear
+            </button>
+          )}
         </div>
 
         <p className="text-xs text-gray-500 text-center">
-          {tool === 'pen' && 'Draw with your finger to sketch the accident scene'}
-          {tool === 'carA' && 'Tap the canvas to place Car A (blue)'}
-          {tool === 'carB' && 'Tap the canvas to place Car B (red)'}
-          {tool === 'arrow' && 'Drag on the canvas to draw an arrow showing direction'}
-          {tool === 'xmarker' && 'Tap the canvas to mark the point of impact'}
+          {getHelpText()}
         </p>
       </div>
     </StepWizard>
