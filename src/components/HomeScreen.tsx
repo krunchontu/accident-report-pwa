@@ -38,6 +38,11 @@ export function HomeScreen() {
     navigate('/accident/triage');
   };
 
+  const handleWitnessReport = async () => {
+    await startNewIncident();
+    navigate('/witness');
+  };
+
   return (
     <div className="p-4 space-y-4">
       {/* Header */}
@@ -76,7 +81,7 @@ export function HomeScreen() {
 
       {/* Witness button */}
       <button
-        onClick={handleStartAccident}
+        onClick={handleWitnessReport}
         className="w-full bg-white border-2 border-navy text-navy rounded-xl p-4 font-semibold flex items-center justify-center gap-2"
       >
         <Eye size={20} />

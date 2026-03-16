@@ -75,37 +75,41 @@
 
 ---
 
-## Spec Deviations
+## Spec Deviations — FIXED
 
-### SPEC-001: No differentiated witness/passenger flow
-- **File:** `src/components/HomeScreen.tsx:71-73`
+### SPEC-001: No differentiated witness/passenger flow — FIXED
+- **File:** `src/components/HomeScreen.tsx`, `src/components/accident/WitnessReportFlow.tsx` (new)
 - **Spec:** "I'm a Witness / Passenger" button should have a reduced flow (what they saw, contact details, photo capture only).
-- **Actual:** Routes to the same full accident flow as the main button.
+- **Fix applied:** Created `WitnessReportFlow` component with a 3-step flow (statement + contact, scene photos, done). HomeScreen witness button now routes to `/witness` instead of the full accident flow. Route added in `App.tsx`.
 
 ### SPEC-002: No voice-to-text (SpeechRecognition API)
 - **Spec:** Scene description and witness statement fields should have a microphone icon for voice-to-text.
 - **Actual:** Not implemented.
 
-### SPEC-003: No draggable vehicle icons in AccidentSketch
+### SPEC-003: No draggable vehicle icons in AccidentSketch — FIXED
+- **File:** `src/components/accident/AccidentSketch.tsx`
 - **Spec:** "Drag-and-drop vehicle icons (2 car shapes), draw arrows, tap to place 'X' marker."
-- **Actual:** Only freehand drawing on templates. No vehicle icons, arrows, or impact markers.
+- **Fix applied:** Added a tool palette with 5 modes: Pen (freehand), Car A (blue), Car B (red), Arrow (drag to draw), and Impact X marker. Vehicle shapes are placed by tapping the canvas; arrows are drawn by dragging. All tools integrate with the existing undo/history system.
 
-### SPEC-004: Setup wizard doesn't auto-save per step
+### SPEC-004: Setup wizard doesn't auto-save per step — FIXED
 - **File:** `src/components/setup/SetupWizard.tsx`
 - **Spec:** "Every field change persists to IndexedDB immediately. If the app crashes, data is preserved."
-- **Actual:** Only saves on the final `handleFinish`. If the app crashes mid-wizard, all data is lost.
+- **Fix applied:** Added `saveCurrentStep()` that persists profile, vehicle, insurance, and driver data to IndexedDB incrementally as the user advances through each wizard step.
 
-### SPEC-005: No `sleepDeprived` eligibility question
-- **File:** `src/components/accident/EligibilityCheck.tsx`
+### SPEC-005: No `sleepDeprived` eligibility question — FIXED
+- **Files:** `src/components/accident/EligibilityCheck.tsx`, `src/constants/eligibilityRules.ts`
 - **Spec:** `EligibilityCheck` type includes `sleepDeprived`, but no question or rule exists for it.
+- **Fix applied:** Added "Were you sleep-deprived (less than 6 hours in 24h)?" question under Driver Fitness category, with an amber-severity rule ("Sleep deprivation may constitute negligence").
 
-### SPEC-006: `useCamera` cancel has no timeout
+### SPEC-006: `useCamera` cancel has no timeout — FIXED
 - **File:** `src/hooks/useCamera.ts`
 - **Description:** If the user opens the file picker and cancels, `onchange` may not fire on iOS Safari. The Promise hangs indefinitely.
+- **Fix applied:** Added a `window.focus` listener that resolves the Promise as `null` (cancel) after a 500ms delay when the window regains focus with no file selected.
 
-### SPEC-007: `EligibilityCheck` unsafe type assertion
-- **File:** `src/components/accident/EligibilityCheck.tsx:122`
+### SPEC-007: `EligibilityCheck` unsafe type assertion — FIXED
+- **File:** `src/components/accident/EligibilityCheck.tsx`
 - **Description:** `elig[q.field] as boolean | null` is unsafe for fields typed as `number | null` or `string`. Works only because the QUESTIONS array currently excludes non-boolean fields, but is fragile.
+- **Fix applied:** Introduced `BooleanFields<T>` utility type that constrains `Question.field` to only keys of `EligibilityCheckType` whose value is `boolean | null`. Removed the unsafe `as boolean | null` cast — the type system now guarantees correctness.
 
 ---
 

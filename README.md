@@ -16,7 +16,7 @@ After a traffic accident in Singapore you have **24 hours** to file a Singapore 
 - **Other party details** — driver info, vehicle registration, insurer & policy, visible damage; full **foreign vehicle** sub-form (nationality, VEP, Autopass, border insurance, Malaysian MIB)
 - **Eligibility self-check** — 30 rules (licence validity, insurance status, alcohol/drugs, named driver, vehicle mods, etc.) scored as green / amber / red with plain-English consequences
 - **Witness capture** — name, contact, free-text statement
-- **Accident sketch** — canvas drawing tool to diagram vehicle positions
+- **Accident sketch** — canvas drawing tool with vehicle icons (Car A/B), directional arrows, impact X markers, and freehand pen
 - **Injury & passenger log** — seatbelt/child-seat status, hospital name, per-passenger injury notes
 - **Summary & signatures** — review all data, capture driver + other-party signatures
 
@@ -146,6 +146,15 @@ The app runs at `http://localhost:5173` by default. On first launch you'll see a
 - **BUG-005:** Fixed missing `useEffect` dependency arrays in TriageScreen for geolocation and location update hooks
 - **BUG-006:** Fixed race condition in OtherPartyDetails where adding a party could briefly show the wrong tab; now switches to the new party only after the store updates
 - **BUG-007:** Removed unused `photos` field from the `Incident` type — photos are stored in the separate `db.photos` Dexie table, so this field was dead weight in IndexedDB
+
+### v1.1.0 — Spec Compliance
+
+- **SPEC-001:** Witness/passenger button now launches a dedicated reduced flow (statement, contact details, scene photos only) instead of the full 8-step accident wizard
+- **SPEC-003:** AccidentSketch gains a tool palette with Car A, Car B, Arrow, and Impact (X) marker — tap to place vehicles, drag to draw arrows, tap for impact points; all tools work with undo
+- **SPEC-004:** Setup wizard now auto-saves profile, vehicle, insurance, and driver data to IndexedDB as the user advances through each step — crash-safe
+- **SPEC-005:** Added missing `sleepDeprived` eligibility question ("Were you sleep-deprived?") and amber-severity rule
+- **SPEC-006:** Camera hook now detects iOS Safari file-picker cancellation via window focus listener, preventing the Promise from hanging indefinitely
+- **SPEC-007:** EligibilityCheck type assertion replaced with compile-time `BooleanFields<T>` constraint — eliminates unsafe `as boolean | null` cast
 
 ## License
 

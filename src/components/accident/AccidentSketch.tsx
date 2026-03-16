@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Undo2, Trash2, Pencil } from 'lucide-react';
+import { Undo2, Trash2, Pencil, Car, X, MoveRight } from 'lucide-react';
 import { StepWizard } from '../layout/StepWizard';
 import { useAccidentStore } from '../../store/useAccidentStore';
 
@@ -12,6 +12,8 @@ const TEMPLATES = [
   { id: 'roundabout', label: 'Roundabout' },
   { id: 'blank', label: 'Blank' },
 ];
+
+type Tool = 'pen' | 'carA' | 'carB' | 'arrow' | 'xmarker';
 
 function drawTemplate(ctx: CanvasRenderingContext2D, template: string, w: number, h: number) {
   ctx.fillStyle = '#f0f0f0';
@@ -73,6 +75,63 @@ function drawTemplate(ctx: CanvasRenderingContext2D, template: string, w: number
   }
 }
 
+function drawCarShape(ctx: CanvasRenderingContext2D, x: number, y: number, color: string, label: string) {
+  const w = 24, h = 44;
+  ctx.save();
+  // Car body
+  ctx.fillStyle = color;
+  ctx.strokeStyle = '#1B2A4A';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(x - w / 2, y - h / 2, w, h, 5);
+  ctx.fill();
+  ctx.stroke();
+  // Windscreen
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.fillRect(x - w / 2 + 3, y - h / 2 + 6, w - 6, 8);
+  // Rear window
+  ctx.fillRect(x - w / 2 + 3, y + h / 2 - 14, w - 6, 8);
+  // Label
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, x, y);
+  ctx.restore();
+}
+
+function drawXMarker(ctx: CanvasRenderingContext2D, x: number, y: number) {
+  const s = 10;
+  ctx.save();
+  ctx.strokeStyle = '#dc2626';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x - s, y - s); ctx.lineTo(x + s, y + s); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x + s, y - s); ctx.lineTo(x - s, y + s); ctx.stroke();
+  ctx.restore();
+}
+
+function drawArrow(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number) {
+  const headLen = 12;
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  ctx.save();
+  ctx.strokeStyle = '#1B2A4A';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  // Arrowhead
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+  ctx.stroke();
+  ctx.restore();
+}
+
 export function AccidentSketch() {
   const navigate = useNavigate();
   const { currentIncident, setSketch } = useAccidentStore();
@@ -81,6 +140,8 @@ export function AccidentSketch() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [history, setHistory] = useState<ImageData[]>([]);
   const [hasDrawn, setHasDrawn] = useState(false);
+  const [tool, setTool] = useState<Tool>('pen');
+  const drawStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -116,13 +177,42 @@ export function AccidentSketch() {
     return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
   };
 
+  const saveSnapshot = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (canvas && ctx) {
+      setHistory(prev => [...prev, ctx.getImageData(0, 0, canvas.width, canvas.height)]);
+    }
+  };
+
   const startDraw = (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
+    const { x, y } = getPos(e);
+
+    if (tool === 'carA' || tool === 'carB' || tool === 'xmarker') {
+      // Stamp tools: place immediately on tap
+      const ctx = canvasRef.current?.getContext('2d');
+      if (!ctx) return;
+      setHasDrawn(true);
+      if (tool === 'carA') drawCarShape(ctx, x, y, '#2563eb', 'A');
+      else if (tool === 'carB') drawCarShape(ctx, x, y, '#dc2626', 'B');
+      else drawXMarker(ctx, x, y);
+      saveSnapshot();
+      return;
+    }
+
+    if (tool === 'arrow') {
+      drawStartRef.current = { x, y };
+      setIsDrawing(true);
+      setHasDrawn(true);
+      return;
+    }
+
+    // Pen tool
     setIsDrawing(true);
     setHasDrawn(true);
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
-    const { x, y } = getPos(e);
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.strokeStyle = '#1B2A4A';
@@ -132,7 +222,7 @@ export function AccidentSketch() {
   };
 
   const draw = (e: React.TouchEvent | React.MouseEvent) => {
-    if (!isDrawing) return;
+    if (!isDrawing || tool !== 'pen') return;
     e.preventDefault();
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
@@ -141,14 +231,20 @@ export function AccidentSketch() {
     ctx.stroke();
   };
 
-  const endDraw = () => {
+  const endDraw = (e?: React.TouchEvent | React.MouseEvent) => {
     if (!isDrawing) return;
     setIsDrawing(false);
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (canvas && ctx) {
-      setHistory(prev => [...prev, ctx.getImageData(0, 0, canvas.width, canvas.height)]);
+
+    if (tool === 'arrow' && drawStartRef.current && e) {
+      const ctx = canvasRef.current?.getContext('2d');
+      if (ctx) {
+        const { x, y } = getPos(e);
+        drawArrow(ctx, drawStartRef.current.x, drawStartRef.current.y, x, y);
+      }
+      drawStartRef.current = null;
     }
+
+    saveSnapshot();
   };
 
   const undo = () => {
@@ -168,6 +264,14 @@ export function AccidentSketch() {
     navigate('/accident/injuries');
   };
 
+  const tools: { id: Tool; label: string; icon: React.ReactNode }[] = [
+    { id: 'pen', label: 'Pen', icon: <Pencil size={14} /> },
+    { id: 'carA', label: 'Car A', icon: <Car size={14} /> },
+    { id: 'carB', label: 'Car B', icon: <Car size={14} /> },
+    { id: 'arrow', label: 'Arrow', icon: <MoveRight size={14} /> },
+    { id: 'xmarker', label: 'Impact', icon: <X size={14} /> },
+  ];
+
   return (
     <StepWizard currentStep={6} totalSteps={8} stepLabel="Accident Sketch" onNext={handleSave}>
       <div className="space-y-4">
@@ -185,10 +289,22 @@ export function AccidentSketch() {
           ))}
         </div>
 
+        {/* Tool palette */}
+        <div className="flex gap-1.5">
+          {tools.map(t => (
+            <button key={t.id} onClick={() => setTool(t.id)}
+              className={`flex-1 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 border-2 transition-colors ${
+                tool === t.id ? 'border-navy bg-navy text-white' : 'border-gray-200 bg-white text-gray-700'
+              }`}>
+              {t.icon} {t.label}
+            </button>
+          ))}
+        </div>
+
         {/* Canvas */}
         <div className="border-2 border-gray-300 rounded-xl overflow-hidden bg-white touch-none">
           <canvas ref={canvasRef}
-            onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
+            onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={() => endDraw()}
             onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw}
             className="cursor-crosshair"
             style={{ width: '100%', height: 'auto' }} />
@@ -208,8 +324,12 @@ export function AccidentSketch() {
           </button>
         </div>
 
-        <p className="text-xs text-gray-500 text-center flex items-center justify-center gap-1">
-          <Pencil size={12} /> Draw with your finger to sketch the accident scene
+        <p className="text-xs text-gray-500 text-center">
+          {tool === 'pen' && 'Draw with your finger to sketch the accident scene'}
+          {tool === 'carA' && 'Tap the canvas to place Car A (blue)'}
+          {tool === 'carB' && 'Tap the canvas to place Car B (red)'}
+          {tool === 'arrow' && 'Drag on the canvas to draw an arrow showing direction'}
+          {tool === 'xmarker' && 'Tap the canvas to mark the point of impact'}
         </p>
       </div>
     </StepWizard>
