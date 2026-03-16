@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { capturePhotoMetadata, generateThumbnail } from '../utils/photoMetadata';
 import type { PhotoMetadata } from '../utils/photoMetadata';
 
@@ -12,6 +12,16 @@ export function useCamera() {
   const [isCapturing, setIsCapturing] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const resolveRef = useRef<((result: CameraResult | null) => void) | null>(null);
+
+  // Clean up DOM element on unmount
+  useEffect(() => {
+    return () => {
+      if (inputRef.current) {
+        inputRef.current.remove();
+        inputRef.current = null;
+      }
+    };
+  }, []);
 
   const capture = useCallback((): Promise<CameraResult | null> => {
     return new Promise((resolve) => {
@@ -30,6 +40,7 @@ export function useCamera() {
       const input = inputRef.current;
 
       const handleChange = async () => {
+        input.onchange = null;
         setIsCapturing(true);
         try {
           const file = input.files?.[0];
@@ -53,16 +64,7 @@ export function useCamera() {
         }
       };
 
-      const handleCancel = () => {
-        setTimeout(() => {
-          if (!input.files?.length) {
-            resolveRef.current?.(null);
-          }
-        }, 500);
-      };
-
       input.onchange = handleChange;
-      input.addEventListener('cancel', handleCancel, { once: true });
       input.click();
     });
   }, []);

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2 } from 'lucide-react';
 import { StepWizard } from '../layout/StepWizard';
@@ -7,9 +8,21 @@ import type { PassengerInfo } from '../../types/incident';
 export function InjuryPassengers() {
   const navigate = useNavigate();
   const { currentIncident, updateInjuries } = useAccidentStore();
+  const prefilled = useRef(false);
 
   if (!currentIncident) { navigate('/'); return null; }
   const injuries = currentIncident.injuries;
+  const triage = currentIncident.triage;
+
+  // Pre-fill from triage answers on first render (only if injuries fields are still at defaults)
+  useEffect(() => {
+    if (prefilled.current) return;
+    prefilled.current = true;
+    const updates: Partial<typeof injuries> = {};
+    if (!injuries.anyInjuries && triage.anyInjuries === true) updates.anyInjuries = true;
+    if (!injuries.ambulanceCalled && triage.ambulanceCalled) updates.ambulanceCalled = true;
+    if (Object.keys(updates).length > 0) updateInjuries(updates);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const inputClass = "w-full p-3 border border-gray-300 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-navy/30 bg-white";
   const labelClass = "block text-sm font-medium text-gray-700 mb-1";

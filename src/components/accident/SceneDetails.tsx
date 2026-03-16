@@ -87,6 +87,9 @@ export function SceneDetails() {
               </button>
             ))}
           </div>
+          {scene.roadCondition === 'other' && (
+            <input className={`${inputClass} mt-2`} value={scene.roadConditionOther} onChange={e => updateScene({ roadConditionOther: e.target.value })} placeholder="Describe road condition" />
+          )}
         </div>
 
         {/* Traffic */}

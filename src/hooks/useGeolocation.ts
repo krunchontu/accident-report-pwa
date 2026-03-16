@@ -20,7 +20,7 @@ export function useGeolocation() {
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-        { headers: { 'Accept-Language': 'en' } }
+        { headers: { 'Accept-Language': 'en', 'User-Agent': 'SGAccidentKaki/1.0' } }
       );
       if (!res.ok) return;
       const data = await res.json();

@@ -4,6 +4,7 @@ import { useIncidentStore } from '../store/useIncidentStore';
 import { useProfileStore } from '../store/useProfileStore';
 import { useAccidentStore } from '../store/useAccidentStore';
 import { differenceInDays, parseISO } from 'date-fns';
+import { calculateEligibility } from '../utils/eligibilityScorer';
 
 export function HomeScreen() {
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ export function HomeScreen() {
       {/* Big red button */}
       <button
         onClick={handleStartAccident}
-        className="w-full bg-danger hover:bg-danger-light active:scale-[0.98] text-white rounded-2xl p-8 shadow-lg transition-all"
+        className="w-full min-h-[40vh] bg-danger hover:bg-danger-light active:scale-[0.98] text-white rounded-2xl p-8 shadow-lg transition-all"
       >
         <AlertTriangle size={48} className="mx-auto mb-3" />
         <div className="text-xl font-bold">
@@ -68,7 +69,7 @@ export function HomeScreen() {
 
       {/* Witness button */}
       <button
-        onClick={() => {/* TODO: witness flow */}}
+        onClick={handleStartAccident}
         className="w-full bg-white border-2 border-navy text-navy rounded-xl p-4 font-semibold flex items-center justify-center gap-2"
       >
         <Eye size={20} />
@@ -106,7 +107,14 @@ export function HomeScreen() {
                 onClick={() => navigate(`/records/${incident.id}`)}
                 className="w-full bg-white rounded-xl p-4 text-left shadow-sm border border-gray-100"
               >
-                <div className="font-medium">{incident.scene.location.address || 'Unknown location'}</div>
+                <div className="flex items-center justify-between">
+                  <div className="font-medium">{incident.scene.location.address || 'Unknown location'}</div>
+                  {(() => {
+                    const elig = calculateEligibility(incident.eligibility);
+                    const color = elig.score === 'green' ? 'text-success bg-success/10' : elig.score === 'amber' ? 'text-warning bg-warning/10' : 'text-danger bg-danger/10';
+                    return <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${color}`}>{elig.score.toUpperCase()}</span>;
+                  })()}
+                </div>
                 <div className="text-sm text-gray-500 mt-1">
                   {new Date(incident.createdAt).toLocaleDateString('en-SG', {
                     day: 'numeric', month: 'short', year: 'numeric'

@@ -19,6 +19,7 @@ const QUESTIONS: Question[] = [
   { field: 'correctLicenceClass', question: 'Is your licence class correct for this vehicle?', category: 'Licensing' },
   { field: 'licenceExpired', question: 'Is your licence expired?', category: 'Licensing', invertDisplay: true },
   { field: 'onSuspension', question: 'Are you currently on licence suspension?', category: 'Licensing', invertDisplay: true },
+  { field: 'pdlWithInstructor', question: 'If on a PDL, was a qualified instructor present?', category: 'Licensing' },
   { field: 'spectaclesWorn', question: 'Spectacles condition met? (if applicable)', category: 'Licensing' },
   { field: 'underAlcohol', question: 'Were you under the influence of alcohol?', category: 'Driver Fitness', invertDisplay: true },
   { field: 'underDrugs', question: 'Were you under the influence of drugs?', category: 'Driver Fitness', invertDisplay: true },
@@ -57,10 +58,10 @@ export function EligibilityCheck() {
     return ELIGIBILITY_RULES.find(r => r.field === field && elig[field] === r.failValue);
   };
 
-  const ynClass = (val: boolean | null, target: boolean) =>
+  const ynClass = (val: boolean | null, target: boolean, invert = false) =>
     `flex-1 py-3 rounded-xl text-sm font-medium border-2 transition-colors text-center ${
       val === target
-        ? target ? 'border-success bg-success text-white' : 'border-danger bg-danger text-white'
+        ? (target !== invert) ? 'border-success bg-success text-white' : 'border-danger bg-danger text-white'
         : 'border-gray-200 bg-white'
     }`;
 
@@ -118,8 +119,8 @@ export function EligibilityCheck() {
                   <div key={q.field} className="bg-white rounded-xl p-4 border border-gray-200">
                     <p className="text-sm font-medium mb-3">{q.question}</p>
                     <div className="flex gap-2">
-                      <button onClick={() => updateEligibility({ [q.field]: true })} className={ynClass(elig[q.field] as boolean | null, true)}>Yes</button>
-                      <button onClick={() => updateEligibility({ [q.field]: false })} className={ynClass(elig[q.field] as boolean | null, false)}>No</button>
+                      <button onClick={() => updateEligibility({ [q.field]: true })} className={ynClass(elig[q.field] as boolean | null, true, q.invertDisplay)}>Yes</button>
+                      <button onClick={() => updateEligibility({ [q.field]: false })} className={ynClass(elig[q.field] as boolean | null, false, q.invertDisplay)}>No</button>
                       <button onClick={() => updateEligibility({ [q.field]: null })}
                         className={`px-3 py-3 rounded-xl text-xs font-medium border-2 transition-colors ${elig[q.field] === null ? 'border-gray-400 bg-gray-100' : 'border-gray-200 bg-white text-gray-400'}`}>N/A</button>
                     </div>

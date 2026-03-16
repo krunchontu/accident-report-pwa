@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { StepWizard } from '../layout/StepWizard';
@@ -40,11 +40,13 @@ export function OtherPartyDetails() {
 
   const parties = currentIncident.otherParties;
 
-  if (parties.length === 0) {
-    const newParty = createEmptyParty();
-    addOtherParty(newParty);
-    return null;
-  }
+  useEffect(() => {
+    if (parties.length === 0) {
+      addOtherParty(createEmptyParty());
+    }
+  }, [parties.length, addOtherParty]);
+
+  if (parties.length === 0) return null;
 
   const party = parties[activePartyIdx] || parties[0];
 
@@ -112,6 +114,7 @@ export function OtherPartyDetails() {
           <div><label className={labelClass}>Vehicle Make / Model</label><input className={inputClass} value={party.vehicleMakeModel} onChange={e => update({ vehicleMakeModel: e.target.value })} /></div>
           <div><label className={labelClass}>Vehicle Colour</label><input className={inputClass} value={party.vehicleColour} onChange={e => update({ vehicleColour: e.target.value })} /></div>
           <div><label className={labelClass}>Licence Number</label><input className={inputClass} value={party.licenceNumber} onChange={e => update({ licenceNumber: e.target.value })} /></div>
+          <div><label className={labelClass}>Licence Class</label><input className={inputClass} value={party.licenceClass} onChange={e => update({ licenceClass: e.target.value })} placeholder="e.g. 3, 3A, 4" /></div>
           <div><label className={labelClass}>Insurer</label><input className={inputClass} value={party.insurerName} onChange={e => update({ insurerName: e.target.value })} /></div>
           <div><label className={labelClass}>Policy Number</label><input className={inputClass} value={party.policyNumber} onChange={e => update({ policyNumber: e.target.value })} /></div>
           <div>
@@ -180,8 +183,65 @@ export function OtherPartyDetails() {
                 <p className="text-gray-600 mt-1">You may need to contact MIB Singapore for uninsured claims.</p>
               </div>
             )}
+            <div><label className={labelClass}>Foreign Licence Class</label><input className={inputClass} value={party.foreign.foreignLicenceClass} onChange={e => updateForeign({ foreignLicenceClass: e.target.value })} /></div>
+            <div>
+              <label className={labelClass}>Foreign Licence Type</label>
+              <select className={inputClass} value={party.foreign.foreignLicenceType} onChange={e => updateForeign({ foreignLicenceType: e.target.value as ForeignVehicleDetails['foreignLicenceType'] })}>
+                {['CDL', 'PDL', 'PSV', 'IDP', 'Other'].map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Foreign Licence Expired?</label>
+              <div className="flex gap-2">
+                <button onClick={() => updateForeign({ foreignLicenceExpired: true })} className={ynClass(party.foreign.foreignLicenceExpired, true)}>Yes</button>
+                <button onClick={() => updateForeign({ foreignLicenceExpired: false })} className={ynClass(party.foreign.foreignLicenceExpired, false)}>No</button>
+              </div>
+            </div>
+            <div>
+              <label className={labelClass}>Has Autopass Card?</label>
+              <div className="flex gap-2">
+                <button onClick={() => updateForeign({ hasAutopassCard: true })} className={ynClass(party.foreign.hasAutopassCard, true)}>Yes</button>
+                <button onClick={() => updateForeign({ hasAutopassCard: false })} className={ynClass(party.foreign.hasAutopassCard, false)}>No</button>
+              </div>
+            </div>
+            <div>
+              <label className={labelClass}>Insurance Type</label>
+              <select className={inputClass} value={party.foreign.insuranceType} onChange={e => updateForeign({ insuranceType: e.target.value as ForeignVehicleDetails['insuranceType'] })}>
+                <option value="sg-extension">MY SG extension</option>
+                <option value="border">Border insurance</option>
+                <option value="separate-sg">Separate SG policy</option>
+                <option value="none">None</option>
+                <option value="unknown">Unknown</option>
+              </select>
+            </div>
             <div><label className={labelClass}>Foreign Insurer Name</label><input className={inputClass} value={party.foreign.foreignInsurerName} onChange={e => updateForeign({ foreignInsurerName: e.target.value })} /></div>
             <div><label className={labelClass}>Foreign Policy Number</label><input className={inputClass} value={party.foreign.foreignPolicyNumber} onChange={e => updateForeign({ foreignPolicyNumber: e.target.value })} /></div>
+            <div><label className={labelClass}>Foreign Policy Expiry</label><input className={inputClass} type="date" value={party.foreign.foreignPolicyExpiry} onChange={e => updateForeign({ foreignPolicyExpiry: e.target.value })} /></div>
+            <div>
+              <label className={labelClass}>Has SG Claims Agent?</label>
+              <div className="flex gap-2">
+                <button onClick={() => updateForeign({ hasSGClaimsAgent: true })} className={ynClass(party.foreign.hasSGClaimsAgent, true)}>Yes</button>
+                <button onClick={() => updateForeign({ hasSGClaimsAgent: false })} className={ynClass(party.foreign.hasSGClaimsAgent, false)}>No</button>
+              </div>
+            </div>
+            {party.foreign.hasSGClaimsAgent && (
+              <div><label className={labelClass}>SG Claims Agent Details</label><textarea className={inputClass} rows={2} value={party.foreign.sgClaimsAgentDetails} onChange={e => updateForeign({ sgClaimsAgentDetails: e.target.value })} placeholder="Name, contact, company" /></div>
+            )}
+            <div>
+              <label className={labelClass}>Hit and Run?</label>
+              <div className="flex gap-2">
+                <button onClick={() => updateForeign({ isHitAndRun: true })} className={ynClass(party.foreign.isHitAndRun, true)}>Yes</button>
+                <button onClick={() => updateForeign({ isHitAndRun: false })} className={ynClass(party.foreign.isHitAndRun, false)}>No</button>
+              </div>
+            </div>
+            {(party.foreign.isHitAndRun || party.foreign.insuranceType === 'none') && (
+              <div className="space-y-4 bg-danger/5 border border-danger/20 rounded-xl p-3">
+                <h4 className="font-semibold text-danger text-sm">Uninsured / Hit-and-Run Details</h4>
+                <div><label className={labelClass}>Flee Direction</label><input className={inputClass} value={party.foreign.fleeDirection} onChange={e => updateForeign({ fleeDirection: e.target.value })} placeholder="Direction the vehicle fled" /></div>
+                <div><label className={labelClass}>Vehicle Description</label><textarea className={inputClass} rows={2} value={party.foreign.vehicleDescription} onChange={e => updateForeign({ vehicleDescription: e.target.value })} placeholder="Make, model, colour, distinguishing features" /></div>
+                <div><label className={labelClass}>Driver Description</label><textarea className={inputClass} rows={2} value={party.foreign.driverDescription} onChange={e => updateForeign({ driverDescription: e.target.value })} placeholder="Gender, build, clothing, etc." /></div>
+              </div>
+            )}
           </div>
         )}
 

@@ -10,6 +10,7 @@ export function PersonalDetails() {
   const [editProfile, setEditProfile] = useState<Partial<UserProfile>>(profile || {});
   const [editVehicle, setEditVehicle] = useState<Partial<VehicleProfile>>(vehicle || {});
   const [editInsurance, setEditInsurance] = useState<Partial<InsuranceProfile>>(insurance || {});
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (profile) setEditProfile(profile);
@@ -29,10 +30,13 @@ export function PersonalDetails() {
       }
     } finally {
       setSaving(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
     }
   };
 
   const inputClass = "w-full p-3 border border-gray-300 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-navy/30 bg-white";
+  const selectClass = "w-full p-3 border border-gray-300 rounded-xl text-base bg-white focus:outline-none focus:ring-2 focus:ring-navy/30";
   const labelClass = "block text-sm font-medium text-gray-700 mb-1";
 
   const tabs = [
@@ -64,7 +68,23 @@ export function PersonalDetails() {
             <div><label className={labelClass}>Email</label><input className={inputClass} type="email" value={editProfile.email || ''} onChange={e => setEditProfile({...editProfile, email: e.target.value})} /></div>
             <div><label className={labelClass}>Address</label><input className={inputClass} value={editProfile.address || ''} onChange={e => setEditProfile({...editProfile, address: e.target.value})} /></div>
             <div><label className={labelClass}>Licence Number</label><input className={inputClass} value={editProfile.licenceNumber || ''} onChange={e => setEditProfile({...editProfile, licenceNumber: e.target.value})} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><label className={labelClass}>Licence Class</label>
+                <select className={selectClass} value={editProfile.licenceClass || '3'} onChange={e => setEditProfile({...editProfile, licenceClass: e.target.value})}>
+                  {['2', '2A', '2B', '3', '3A', 'Other'].map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div><label className={labelClass}>Licence Expiry</label><input className={inputClass} type="date" value={editProfile.licenceExpiryDate || ''} onChange={e => setEditProfile({...editProfile, licenceExpiryDate: e.target.value})} /></div>
+            </div>
             <div><label className={labelClass}>Years Since Passing</label><input className={inputClass} type="number" value={editProfile.yearsPassed || 0} onChange={e => setEditProfile({...editProfile, yearsPassed: parseInt(e.target.value) || 0})} /></div>
+            <div className="flex items-center gap-3">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" checked={editProfile.hasSpectacleCondition || false} onChange={e => setEditProfile({...editProfile, hasSpectacleCondition: e.target.checked})} />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-navy/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-navy after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+              </label>
+              <span className="text-sm">Spectacles condition on licence</span>
+            </div>
+            <div><label className={labelClass}>Medical Conditions</label><input className={inputClass} value={editProfile.medicalConditions || ''} onChange={e => setEditProfile({...editProfile, medicalConditions: e.target.value})} placeholder="Optional" /></div>
           </>
         )}
         {tab === 'vehicle' && (
@@ -94,7 +114,7 @@ export function PersonalDetails() {
 
       <button onClick={handleSave} disabled={saving}
         className="w-full mt-6 py-4 bg-navy text-white rounded-xl font-semibold flex items-center justify-center gap-2 disabled:opacity-50">
-        <Save size={18} /> {saving ? 'Saving...' : 'Save Changes'}
+        <Save size={18} /> {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Changes'}
       </button>
     </div>
   );

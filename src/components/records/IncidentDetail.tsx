@@ -1,11 +1,12 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { ChevronLeft, Download, Clock } from 'lucide-react';
+import { ChevronLeft, Download, Clock, Share2 } from 'lucide-react';
 import { db } from '../../db/database';
 import type { Incident } from '../../types/incident';
 import { formatDateTime } from '../../utils/dateHelpers';
 import { calculateEligibility } from '../../utils/eligibilityScorer';
 import { generatePDF } from '../../utils/pdfExport';
+import { shareFile } from '../../utils/shareHelper';
 
 export function IncidentDetail() {
   const { id } = useParams<{ id: string }>();
@@ -34,6 +35,19 @@ export function IncidentDetail() {
       a.download = `accident-report-${incident.createdAt.slice(0, 10)}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleShare = async () => {
+    setGenerating(true);
+    try {
+      const photos = await db.photos.where('incidentId').equals(incident.id).toArray();
+      const photoData = photos.map(p => ({ promptId: p.promptId, thumbnail: p.thumbnail }));
+      const blob = await generatePDF(incident, photoData);
+      const file = new File([blob], `accident-report-${incident.createdAt.slice(0, 10)}.pdf`, { type: 'application/pdf' });
+      await shareFile('Accident Report', file);
     } finally {
       setGenerating(false);
     }
@@ -73,6 +87,32 @@ export function IncidentDetail() {
           <div className="text-sm mt-1">{eligResult.triggeredRules.length} issue(s) flagged</div>
         </div>
 
+        {incident.injuries && (
+          <div className="bg-white rounded-xl p-4 border border-gray-200">
+            <h3 className="font-semibold text-sm text-gray-700 mb-2">Injuries</h3>
+            <div className="text-sm space-y-1">
+              <div>Injuries reported: {incident.injuries.anyInjuries ? 'Yes' : 'No'}</div>
+              {incident.injuries.ambulanceCalled && <div>Ambulance called</div>}
+              {incident.injuries.hospitalName && <div>Hospital: {incident.injuries.hospitalName}</div>}
+              <div>Passengers: {incident.injuries.passengerCount}</div>
+            </div>
+          </div>
+        )}
+
+        {incident.witnesses.length > 0 && (
+          <div className="bg-white rounded-xl p-4 border border-gray-200">
+            <h3 className="font-semibold text-sm text-gray-700 mb-2">Witnesses</h3>
+            <div className="text-sm space-y-2">
+              {incident.witnesses.map(w => (
+                <div key={w.id}>
+                  <div className="font-medium">{w.fullName}</div>
+                  {w.contactNumber && <div className="text-gray-500">{w.contactNumber}</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {incident.sketchDataUrl && (
           <div className="bg-white rounded-xl p-4 border border-gray-200">
             <h3 className="font-semibold text-sm text-gray-700 mb-2">Sketch</h3>
@@ -84,6 +124,10 @@ export function IncidentDetail() {
           <button onClick={handleExportPDF} disabled={generating}
             className="flex-1 py-3 bg-navy text-white rounded-xl font-medium flex items-center justify-center gap-2 text-sm disabled:opacity-50">
             <Download size={16} /> {generating ? 'Generating...' : 'Export PDF'}
+          </button>
+          <button onClick={handleShare} disabled={generating}
+            className="flex-1 py-3 bg-navy text-white rounded-xl font-medium flex items-center justify-center gap-2 text-sm disabled:opacity-50">
+            <Share2 size={16} /> Share
           </button>
           <button onClick={() => navigate(`/deadlines/${incident.id}`)}
             className="flex-1 py-3 bg-warning text-white rounded-xl font-medium flex items-center justify-center gap-2 text-sm">
