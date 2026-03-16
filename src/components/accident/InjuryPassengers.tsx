@@ -80,10 +80,10 @@ export function InjuryPassengers() {
         <div>
           <label className={labelClass}>Child passengers in child seats?</label>
           <div className="flex gap-2">
-            <button onClick={() => updateInjuries({ childSeatsUsed: true })} className={ynClass(injuries.childSeatsUsed === true, true)}>Yes</button>
-            <button onClick={() => updateInjuries({ childSeatsUsed: false })} className={ynClass(injuries.childSeatsUsed === false, false)}>No</button>
+            <button onClick={() => updateInjuries({ childSeatsUsed: true })} className={ynClass(injuries.childSeatsUsed as boolean, true)}>Yes</button>
+            <button onClick={() => updateInjuries({ childSeatsUsed: false })} className={ynClass(injuries.childSeatsUsed as boolean, false)}>No</button>
             <button onClick={() => updateInjuries({ childSeatsUsed: null })}
-              className={`px-3 py-3 rounded-xl text-xs font-medium border-2 ${injuries.childSeatsUsed === null ? 'border-gray-400 bg-gray-100' : 'border-gray-200 bg-white text-gray-400'}`}>N/A</button>
+              className={`flex-1 py-3 rounded-xl text-sm font-medium border-2 transition-colors text-center ${injuries.childSeatsUsed === null ? 'border-gray-400 bg-gray-200 text-gray-700' : 'border-gray-200 bg-white text-gray-400'}`}>N/A</button>
           </div>
         </div>
 
