@@ -83,13 +83,21 @@ export function AccidentSketch() {
 
   if (!currentIncident) { navigate('/'); return null; }
 
+  const lastPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
   const getPos = (e: React.TouchEvent | React.MouseEvent) => {
     const canvas = canvasRef.current!;
     const rect = canvas.getBoundingClientRect();
-    if ('touches' in e) {
-      return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+    let pos: { x: number; y: number };
+    if ('changedTouches' in e && e.changedTouches.length > 0) {
+      pos = { x: e.changedTouches[0].clientX - rect.left, y: e.changedTouches[0].clientY - rect.top };
+    } else if ('touches' in e && e.touches.length > 0) {
+      pos = { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+    } else {
+      pos = { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
     }
-    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
+    lastPosRef.current = pos;
+    return pos;
   };
 
   const pushUndo = () => {
@@ -190,18 +198,19 @@ export function AccidentSketch() {
     setIsDrawing(false);
     setArrowPreview(null);
 
+    const endPos = e ? getPos(e) : lastPosRef.current;
+
     // Direction prompt: place arrow from car center
-    if (directionPrompt && drawStartRef.current && e) {
-      const { x, y } = getPos(e);
-      const dx = x - drawStartRef.current.x;
-      const dy = y - drawStartRef.current.y;
+    if (directionPrompt && drawStartRef.current) {
+      const dx = endPos.x - drawStartRef.current.x;
+      const dy = endPos.y - drawStartRef.current.y;
       const dist = Math.hypot(dx, dy);
       if (dist >= MIN_ARROW_DISTANCE) {
         addElement({
           id: crypto.randomUUID(),
           type: 'arrow',
           x1: drawStartRef.current.x, y1: drawStartRef.current.y,
-          x2: x, y2: y,
+          x2: endPos.x, y2: endPos.y,
           carLabel: directionPrompt.label,
           color: directionPrompt.color,
         });
