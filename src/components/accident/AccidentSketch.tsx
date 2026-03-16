@@ -41,17 +41,18 @@ export function AccidentSketch() {
   const penPointsRef = useRef<{ x: number; y: number }[]>([]);
   const backgroundImgRef = useRef<HTMLImageElement | null>(null);
   const [arrowPreview, setArrowPreview] = useState<{ x1: number; y1: number; x2: number; y2: number; color: string } | null>(null);
+  // FIX #1: All hooks declared before any conditional returns
+  const lastPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Derive available car tools from otherParties
   const partyCount = currentIncident?.otherParties?.length ?? 0;
   const carCount = Math.max(2, partyCount + 1);
   const availableCars = CAR_PALETTE.slice(0, Math.min(carCount, CAR_PALETTE.length));
 
+  // FIX #3: Separate canvas sizing from rendering — initCanvas only sets dimensions + loads background
   const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
     const rect = canvas.parentElement!.getBoundingClientRect();
     canvas.width = rect.width;
     canvas.height = Math.min(rect.width * 1.2, 500);
@@ -60,17 +61,31 @@ export function AccidentSketch() {
       const img = new Image();
       img.onload = () => {
         backgroundImgRef.current = img;
-        renderCanvas(ctx, canvas.width, canvas.height, template, elements, selectedId, img);
+        // Trigger a re-render after image loads
+        const ctx = canvas.getContext('2d');
+        if (ctx) renderCanvas(ctx, canvas.width, canvas.height, template, [], null, img);
       };
       img.src = currentIncident.sketchDataUrl;
-    } else {
-      renderCanvas(ctx, canvas.width, canvas.height, template, elements, selectedId, backgroundImgRef.current);
     }
-  }, [template, currentIncident?.sketchDataUrl, elements, selectedId]);
+  }, [template, currentIncident?.sketchDataUrl]);
 
+  // Run initCanvas only on mount and template change
   useEffect(() => { initCanvas(); }, [initCanvas]);
 
-  // Re-render canvas when elements, selection, or arrow preview change
+  // FIX #5: Handle window resize / orientation change
+  useEffect(() => {
+    const handleResize = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.parentElement!.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = Math.min(rect.width * 1.2, 500);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Single render effect — redraws canvas whenever any visual state changes
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
@@ -86,10 +101,16 @@ export function AccidentSketch() {
   const getPos = (e: React.TouchEvent | React.MouseEvent) => {
     const canvas = canvasRef.current!;
     const rect = canvas.getBoundingClientRect();
-    if ('touches' in e) {
-      return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+    let pos: { x: number; y: number };
+    if ('changedTouches' in e && e.changedTouches.length > 0) {
+      pos = { x: e.changedTouches[0].clientX - rect.left, y: e.changedTouches[0].clientY - rect.top };
+    } else if ('touches' in e && e.touches.length > 0) {
+      pos = { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+    } else {
+      pos = { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
     }
-    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
+    lastPosRef.current = pos;
+    return pos;
   };
 
   const pushUndo = () => {
@@ -190,24 +211,28 @@ export function AccidentSketch() {
     setIsDrawing(false);
     setArrowPreview(null);
 
+    const endPos = e ? getPos(e) : lastPosRef.current;
+
     // Direction prompt: place arrow from car center
-    if (directionPrompt && drawStartRef.current && e) {
-      const { x, y } = getPos(e);
-      const dx = x - drawStartRef.current.x;
-      const dy = y - drawStartRef.current.y;
+    if (directionPrompt && drawStartRef.current) {
+      const dx = endPos.x - drawStartRef.current.x;
+      const dy = endPos.y - drawStartRef.current.y;
       const dist = Math.hypot(dx, dy);
       if (dist >= MIN_ARROW_DISTANCE) {
         addElement({
           id: crypto.randomUUID(),
           type: 'arrow',
           x1: drawStartRef.current.x, y1: drawStartRef.current.y,
-          x2: x, y2: y,
+          x2: endPos.x, y2: endPos.y,
           carLabel: directionPrompt.label,
           color: directionPrompt.color,
         });
+        drawStartRef.current = null;
+        setDirectionPrompt(null);
+      } else {
+        // FIX #4: Short drag — keep the prompt so user can retry
+        drawStartRef.current = null;
       }
-      drawStartRef.current = null;
-      setDirectionPrompt(null);
       return;
     }
 
@@ -255,9 +280,13 @@ export function AccidentSketch() {
     backgroundImgRef.current = null;
   };
 
+  // FIX #2: Clear selection before saving so indicator isn't baked into PNG
   const handleSave = () => {
     const canvas = canvasRef.current;
-    if (canvas) {
+    const ctx = canvas?.getContext('2d');
+    if (canvas && ctx) {
+      // Re-render without selection indicator
+      renderCanvas(ctx, canvas.width, canvas.height, template, elements, null, backgroundImgRef.current);
       setSketch(canvas.toDataURL('image/png'));
     }
     navigate('/accident/injuries');
