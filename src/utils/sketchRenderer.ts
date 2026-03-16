@@ -94,11 +94,11 @@ export function drawXMarker(ctx: CanvasRenderingContext2D, x: number, y: number)
   ctx.restore();
 }
 
-export function drawArrow(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, style?: { dashed?: boolean; alpha?: number }) {
+export function drawArrow(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, style?: { dashed?: boolean; alpha?: number; color?: string }) {
   const headLen = 12;
   const angle = Math.atan2(y2 - y1, x2 - x1);
   ctx.save();
-  ctx.strokeStyle = '#1B2A4A';
+  ctx.strokeStyle = style?.color ?? '#1B2A4A';
   ctx.lineWidth = 3;
   ctx.lineCap = 'round';
   if (style?.alpha !== undefined) ctx.globalAlpha = style.alpha;
@@ -205,7 +205,7 @@ export function renderCanvas(
         drawCarShape(ctx, el.x, el.y, el.color, el.label);
         break;
       case 'arrow':
-        drawArrow(ctx, el.x1, el.y1, el.x2, el.y2);
+        drawArrow(ctx, el.x1, el.y1, el.x2, el.y2, { color: el.color });
         break;
       case 'xmarker':
         drawXMarker(ctx, el.x, el.y);
