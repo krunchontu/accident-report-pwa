@@ -119,7 +119,7 @@ The app runs at `http://localhost:5173` by default. On first launch you'll see a
 
 **Initial implementation** of the full accident reporting flow:
 
-- Complete 10-step wizard: Triage → Emergency → Scene → Photos → Other Party → Eligibility → Witnesses → Sketch → Injuries → Summary
+- Triage & Emergency entry screens, followed by an 8-step wizard: Scene → Photos → Other Party → Eligibility → Witnesses → Sketch → Injuries → Summary
 - First-run setup wizard for driver profile & vehicle details
 - IndexedDB persistence for all incidents and photos
 - PDF export with full incident data

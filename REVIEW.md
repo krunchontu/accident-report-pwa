@@ -106,15 +106,17 @@
 
 ---
 
-## Documentation Issues
+## Documentation Issues — FIXED
 
-### DOC-001: README says "10-step wizard" — UI shows 8 steps
-- **File:** `README.md:122`
-- **Description:** README lists 10 items (Triage → Summary). The StepWizard UI shows "Step 1 of 8" through "Step 8 of 8" because Triage and Emergency aren't numbered wizard steps.
+### DOC-001: README says "10-step wizard" — UI shows 8 steps — FIXED
+- **File:** `README.md`
+- **Description:** README listed "10-step wizard" but UI shows 8 numbered steps (Triage and Emergency are pre-wizard entry screens).
+- **Fix applied:** Corrected to "8-step wizard" with Triage & Emergency described as entry screens.
 
-### DOC-002: Duplicate PWA manifest
-- **Files:** `public/manifest.json` and `vite.config.ts` manifest property
-- **Description:** PWA manifest is defined in both places. `vite-plugin-pwa` generates its own manifest from the config, potentially overriding `public/manifest.json`. Should use one source of truth.
+### DOC-002: Duplicate PWA manifest — FIXED
+- **Files:** `public/manifest.json` (removed), `vite.config.ts` manifest property (kept)
+- **Description:** PWA manifest was defined in both `public/manifest.json` and `vite.config.ts`. `vite-plugin-pwa` generates its own from the config, so the static file was redundant and could cause conflicts.
+- **Fix applied:** Removed `public/manifest.json`. Single source of truth is now `vite.config.ts`.
 
 ---
 
