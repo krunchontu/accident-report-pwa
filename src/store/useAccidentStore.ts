@@ -42,7 +42,6 @@ function createNewIncident(): Incident {
       trafficCondition: 'light', speedLimit: '', description: '',
     },
     triage: { anyInjuries: null, ambulanceCalled: false, policeCalled: false, vehiclesMoved: false },
-    photos: [],
     otherParties: [],
     eligibility: createEmptyEligibility(),
     witnesses: [],

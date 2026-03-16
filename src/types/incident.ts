@@ -27,7 +27,6 @@ export interface Incident {
     policeCalled: boolean;
     vehiclesMoved: boolean;
   };
-  photos: IncidentPhoto[];
   otherParties: OtherParty[];
   eligibility: EligibilityCheck;
   witnesses: Witness[];

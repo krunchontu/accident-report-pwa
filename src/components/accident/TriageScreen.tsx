@@ -11,13 +11,13 @@ export function TriageScreen() {
 
   useEffect(() => {
     geo.getCurrentPosition();
-  }, []);
+  }, [geo.getCurrentPosition]);
 
   useEffect(() => {
     if (geo.latitude && geo.longitude) {
       updateLocation(geo.latitude, geo.longitude, geo.address, geo.roadName);
     }
-  }, [geo.latitude, geo.longitude, geo.address, geo.roadName]);
+  }, [geo.latitude, geo.longitude, geo.address, geo.roadName, updateLocation]);
 
   if (!currentIncident) {
     navigate('/');

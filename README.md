@@ -140,6 +140,13 @@ The app runs at `http://localhost:5173` by default. On first launch you'll see a
 - Added missing fields to incident detail view (injuries, witnesses, share button)
 - Ensured HomeScreen eligibility badges and witness button work correctly
 
+### v1.0.1 — Bug Fixes
+
+- **BUG-004:** AccidentSketch now shows a confirmation dialog before switching templates or clearing, preventing accidental loss of user drawings
+- **BUG-005:** Fixed missing `useEffect` dependency arrays in TriageScreen for geolocation and location update hooks
+- **BUG-006:** Fixed race condition in OtherPartyDetails where adding a party could briefly show the wrong tab; now switches to the new party only after the store updates
+- **BUG-007:** Removed unused `photos` field from the `Incident` type — photos are stored in the separate `db.photos` Dexie table, so this field was dead weight in IndexedDB
+
 ## License
 
 Private — not open source.
