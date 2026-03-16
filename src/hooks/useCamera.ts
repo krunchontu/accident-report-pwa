@@ -66,6 +66,20 @@ export function useCamera() {
 
       input.onchange = handleChange;
       input.click();
+
+      // iOS Safari may not fire onchange when the user cancels the file picker.
+      // Detect cancellation via window re-focus after a delay.
+      const onFocus = () => {
+        setTimeout(() => {
+          // If no file was selected after regaining focus, treat as cancel
+          if (input.files?.length === 0 && resolveRef.current) {
+            input.onchange = null;
+            resolveRef.current(null);
+            resolveRef.current = null;
+          }
+        }, 500);
+      };
+      window.addEventListener('focus', onFocus, { once: true });
     });
   }, []);
 

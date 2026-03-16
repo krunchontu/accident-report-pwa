@@ -43,12 +43,24 @@ export function SetupWizard() {
     setSetupComplete(true);
   };
 
+  const saveCurrentStep = async (currentStep: number) => {
+    if (currentStep >= 1) {
+      await saveProfile({ ...profile, updatedAt: new Date().toISOString() } as UserProfile);
+    }
+    if (currentStep >= 2) {
+      await saveVehicle(vehicle as VehicleProfile);
+    }
+    if (currentStep >= 3) {
+      const ins = { ...insurance, vehicleId: vehicle.id } as InsuranceProfile;
+      await saveInsurance(ins);
+    }
+    if (currentStep >= 4 && drivers.length > 0) {
+      await saveFamilyDrivers(drivers);
+    }
+  };
+
   const handleFinish = async () => {
-    await saveProfile({ ...profile, updatedAt: new Date().toISOString() } as UserProfile);
-    await saveVehicle(vehicle as VehicleProfile);
-    const ins = { ...insurance, vehicleId: vehicle.id } as InsuranceProfile;
-    await saveInsurance(ins);
-    if (drivers.length > 0) await saveFamilyDrivers(drivers);
+    await saveCurrentStep(4);
     setSetupComplete(true);
   };
 
@@ -341,10 +353,11 @@ export function SetupWizard() {
             </button>
           )}
           <button
-            onClick={() => {
+            onClick={async () => {
               if (step === totalSteps - 1) {
                 handleFinish();
               } else {
+                await saveCurrentStep(step);
                 setStep(step + 1);
               }
             }}

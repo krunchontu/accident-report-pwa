@@ -15,6 +15,7 @@ export const ELIGIBILITY_RULES: EligibilityRule[] = [
   { field: "pdlWithInstructor", failValue: false, severity: "red", consequence: "PDL holder without instructor = CLAIM DENIED", category: "Licensing" },
   { field: "usingPhone", failValue: true, severity: "amber", consequence: "Phone use = possible denial or contributory negligence", category: "Driver Fitness" },
   { field: "fatigued", failValue: true, severity: "amber", consequence: "Driving while fatigued may constitute negligence", category: "Driver Fitness" },
+  { field: "sleepDeprived", failValue: true, severity: "amber", consequence: "Sleep deprivation may constitute negligence", category: "Driver Fitness" },
   { field: "undeclaredMedical", failValue: true, severity: "amber", consequence: "Undeclared medical conditions = possible policy voiding", category: "Driver Fitness" },
   { field: "isNamedDriver", failValue: false, severity: "amber", consequence: "Not a named driver = possible denial or excess surcharge", category: "Insurance" },
   { field: "meetsAgeRequirement", failValue: false, severity: "amber", consequence: "Outside policy age range = possible denial", category: "Insurance" },

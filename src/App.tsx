@@ -20,6 +20,7 @@ const WitnessForm = lazy(() => import('./components/accident/WitnessForm').then(
 const AccidentSketch = lazy(() => import('./components/accident/AccidentSketch').then(m => ({ default: m.AccidentSketch })));
 const InjuryPassengers = lazy(() => import('./components/accident/InjuryPassengers').then(m => ({ default: m.InjuryPassengers })));
 const Summary = lazy(() => import('./components/accident/Summary').then(m => ({ default: m.Summary })));
+const WitnessReportFlow = lazy(() => import('./components/accident/WitnessReportFlow').then(m => ({ default: m.WitnessReportFlow })));
 const DeadlineDashboard = lazy(() => import('./components/tracker/DeadlineDashboard').then(m => ({ default: m.DeadlineDashboard })));
 const IncidentList = lazy(() => import('./components/records/IncidentList').then(m => ({ default: m.IncidentList })));
 const IncidentDetail = lazy(() => import('./components/records/IncidentDetail').then(m => ({ default: m.IncidentDetail })));
@@ -78,6 +79,7 @@ export default function App() {
         <Route path="/accident/sketch" element={<AccidentSketch />} />
         <Route path="/accident/injuries" element={<InjuryPassengers />} />
         <Route path="/accident/summary" element={<Summary />} />
+        <Route path="/witness" element={<WitnessReportFlow />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
