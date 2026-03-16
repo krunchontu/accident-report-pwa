@@ -28,7 +28,7 @@ export function SignaturePad({ label, value, onChange }: SignaturePadProps) {
       img.onload = () => { ctx.drawImage(img, 0, 0); setIsEmpty(false); };
       img.src = value;
     }
-  }, []);
+  }, [value]);
 
   const getPos = (e: React.TouchEvent | React.MouseEvent) => {
     const canvas = canvasRef.current!;

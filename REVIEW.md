@@ -6,25 +6,25 @@
 
 ---
 
-## Critical Bugs (Must Fix)
+## Critical Bugs — FIXED
 
-### BUG-001: Resuming in-progress incident causes infinite redirect
-- **File:** `src/components/HomeScreen.tsx:26-28`
+### BUG-001: Resuming in-progress incident causes infinite redirect — FIXED
+- **File:** `src/components/HomeScreen.tsx`
 - **Severity:** Critical
-- **Description:** When the user clicks "Continue Documenting" (or the yellow in-progress banner), `handleStartAccident` navigates to `/accident/triage` but never loads the existing incident into `useAccidentStore`. After a page refresh, `currentIncident` is `null`. `TriageScreen` checks `!currentIncident` and redirects back to `/`, creating an infinite loop.
-- **Fix:** Call `loadIncident(inProgressIncident.id)` before navigating.
+- **Description:** `handleStartAccident` and the in-progress banner navigated to `/accident/triage` without loading the incident into `useAccidentStore`. After a page refresh, `currentIncident` was `null`, causing TriageScreen to redirect back to `/` in an infinite loop.
+- **Fix applied:** Added `resumeIncident()` that calls `loadIncident(inProgressIncident.id)` before navigating. Both the banner and the red button now use this function.
 
-### BUG-002: Foreign vehicle insurance type values mismatch
-- **File:** `src/components/accident/OtherPartyDetails.tsx:210-215`
+### BUG-002: Foreign vehicle insurance type values mismatch — FIXED
+- **File:** `src/components/accident/OtherPartyDetails.tsx`
 - **Severity:** Critical (data corruption)
-- **Description:** The `<select>` option values use `"sg-extension"`, `"border"`, `"separate-sg"` but `ForeignVehicleDetails.insuranceType` (in `incident.ts:100`) expects `"my_sg_extension"`, `"border_insurance"`, `"separate_sg_policy"`. The `as` cast masks this at compile time. Wrong values are silently persisted.
-- **Fix:** Align `<option value>` strings to match the TypeScript union type.
+- **Description:** `<option>` values `"sg-extension"`, `"border"`, `"separate-sg"` didn't match `ForeignVehicleDetails.insuranceType` union `"my_sg_extension"`, `"border_insurance"`, `"separate_sg_policy"`. The `as` cast masked this at compile time, silently persisting invalid values.
+- **Fix applied:** Aligned `<option value>` strings to match the TypeScript union type exactly.
 
-### BUG-003: SignaturePad doesn't restore saved signatures on re-mount
-- **File:** `src/components/accident/SignaturePad.tsx:31`
+### BUG-003: SignaturePad doesn't restore saved signatures on re-mount — FIXED
+- **File:** `src/components/accident/SignaturePad.tsx`
 - **Severity:** Critical
-- **Description:** The `useEffect` that draws a saved signature uses `[]` dependency array but reads `value` from props. If data loads asynchronously (common with IndexedDB), the saved signature is never rendered. Navigating back to Summary remounts the component, losing the visual.
-- **Fix:** Add `value` to the dependency array.
+- **Description:** `useEffect` for drawing saved signatures used `[]` dependency array but read `value` from props. Signatures were never restored when the component remounted or when data loaded asynchronously from IndexedDB.
+- **Fix applied:** Changed dependency array from `[]` to `[value]`.
 
 ---
 
