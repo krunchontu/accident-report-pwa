@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { StepWizard } from '../layout/StepWizard';
@@ -40,10 +40,15 @@ export function OtherPartyDetails() {
 
   const parties = currentIncident.otherParties;
 
+  const prevLengthRef = useRef(parties.length);
+
   useEffect(() => {
     if (parties.length === 0) {
       addOtherParty(createEmptyParty());
+    } else if (parties.length > prevLengthRef.current) {
+      setActivePartyIdx(parties.length - 1);
     }
+    prevLengthRef.current = parties.length;
   }, [parties.length, addOtherParty]);
 
   if (parties.length === 0) return null;
@@ -247,7 +252,7 @@ export function OtherPartyDetails() {
 
         {/* Multi-party */}
         <div className="flex gap-2">
-          <button onClick={() => { const p = createEmptyParty(); addOtherParty(p); setActivePartyIdx(parties.length); }}
+          <button onClick={() => { addOtherParty(createEmptyParty()); }}
             className="flex-1 py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-medium flex items-center justify-center gap-2">
             <Plus size={16} /> Add Another Party
           </button>

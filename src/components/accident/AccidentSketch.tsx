@@ -80,6 +80,7 @@ export function AccidentSketch() {
   const [template, setTemplate] = useState('straight2');
   const [isDrawing, setIsDrawing] = useState(false);
   const [history, setHistory] = useState<ImageData[]>([]);
+  const [hasDrawn, setHasDrawn] = useState(false);
 
   const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -118,6 +119,7 @@ export function AccidentSketch() {
   const startDraw = (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
     setIsDrawing(true);
+    setHasDrawn(true);
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
     const { x, y } = getPos(e);
@@ -172,7 +174,11 @@ export function AccidentSketch() {
         {/* Template selector */}
         <div className="flex gap-2 overflow-x-auto pb-2">
           {TEMPLATES.map(t => (
-            <button key={t.id} onClick={() => setTemplate(t.id)}
+            <button key={t.id} onClick={() => {
+                if (hasDrawn && !window.confirm('Changing the template will clear your drawing. Continue?')) return;
+                setHasDrawn(false);
+                setTemplate(t.id);
+              }}
               className={`px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap border-2 transition-colors ${template === t.id ? 'border-navy bg-navy text-white' : 'border-gray-200 bg-white'}`}>
               {t.label}
             </button>
@@ -193,7 +199,11 @@ export function AccidentSketch() {
           <button onClick={undo} className="flex-1 py-3 bg-white border-2 border-gray-200 rounded-xl font-medium flex items-center justify-center gap-2 text-sm">
             <Undo2 size={16} /> Undo
           </button>
-          <button onClick={initCanvas} className="flex-1 py-3 bg-white border-2 border-gray-200 rounded-xl font-medium flex items-center justify-center gap-2 text-sm">
+          <button onClick={() => {
+              if (hasDrawn && !window.confirm('Clear your drawing?')) return;
+              setHasDrawn(false);
+              initCanvas();
+            }} className="flex-1 py-3 bg-white border-2 border-gray-200 rounded-xl font-medium flex items-center justify-center gap-2 text-sm">
             <Trash2 size={16} /> Clear
           </button>
         </div>

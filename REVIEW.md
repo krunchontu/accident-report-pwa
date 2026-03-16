@@ -28,28 +28,31 @@
 
 ---
 
-## Moderate Bugs
+## Moderate Bugs — FIXED
 
-### BUG-004: Sketch template change silently wipes user drawing
-- **File:** `src/components/accident/AccidentSketch.tsx:103-105`
+### BUG-004: Sketch template change silently wipes user drawing — FIXED
+- **File:** `src/components/accident/AccidentSketch.tsx`
 - **Severity:** Moderate
 - **Description:** Changing the template calls `initCanvas` which clears the canvas. If the user hasn't navigated away, their drawing is lost without a confirmation dialog. Spec requires confirmation for destructive actions like "clear sketch."
-- **Fix:** Add a confirmation prompt before switching templates if the canvas has been drawn on.
+- **Fix applied:** Added `hasDrawn` state flag set on `startDraw`. Template switch and Clear button now show a `window.confirm` dialog before proceeding when the user has drawn on the canvas.
 
-### BUG-005: TriageScreen useEffect missing dependencies
-- **File:** `src/components/accident/TriageScreen.tsx:12-20`
+### BUG-005: TriageScreen useEffect missing dependencies — FIXED
+- **File:** `src/components/accident/TriageScreen.tsx`
 - **Severity:** Low
-- **Description:** `geo.getCurrentPosition` and `updateLocation` are missing from effect dependency arrays. Works by coincidence (stable refs) but violates React rules and suppresses linter warnings.
+- **Description:** `geo.getCurrentPosition` and `updateLocation` were missing from effect dependency arrays. Worked by coincidence (stable refs from `useCallback`) but violated React rules.
+- **Fix applied:** Added `geo.getCurrentPosition` and `updateLocation` to their respective `useEffect` dependency arrays.
 
-### BUG-006: OtherPartyDetails activePartyIdx can briefly reference undefined
-- **File:** `src/components/accident/OtherPartyDetails.tsx:250`
+### BUG-006: OtherPartyDetails activePartyIdx can briefly reference undefined — FIXED
+- **File:** `src/components/accident/OtherPartyDetails.tsx`
 - **Severity:** Low
-- **Description:** `setActivePartyIdx(parties.length)` fires before the store update propagates, briefly causing `parties[activePartyIdx]` to be `undefined`. The `parties[0]` fallback prevents a crash but the UI flickers to the wrong party.
+- **Description:** `setActivePartyIdx(parties.length)` fired before the store update propagated, briefly causing `parties[activePartyIdx]` to be `undefined`. The `parties[0]` fallback prevented a crash but the UI flickered to the wrong party.
+- **Fix applied:** Removed inline `setActivePartyIdx` from the click handler. Added a `useEffect` with a `prevLengthRef` that switches to the new party only after `parties.length` has actually increased in the store.
 
-### BUG-007: Incident `photos` array is always empty (dead field)
-- **File:** `src/types/incident.ts:30`
+### BUG-007: Incident `photos` array is always empty (dead field) — FIXED
+- **File:** `src/types/incident.ts`, `src/store/useAccidentStore.ts`
 - **Severity:** Low
-- **Description:** `Incident.photos: IncidentPhoto[]` is initialized as `[]` and never populated. Photos are stored in a separate Dexie table via `db.photos`. This field bloats the IndexedDB incident records.
+- **Description:** `Incident.photos: IncidentPhoto[]` was initialized as `[]` and never populated. Photos are stored in a separate Dexie table via `db.photos`. This field bloated IndexedDB incident records.
+- **Fix applied:** Removed the `photos` property from the `Incident` interface and from `createNewIncident()`. No consumers referenced this field.
 
 ---
 
