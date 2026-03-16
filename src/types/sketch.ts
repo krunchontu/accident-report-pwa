@@ -19,6 +19,8 @@ export interface ArrowElement extends SketchElementBase {
   y1: number;
   x2: number;
   y2: number;
+  carLabel: string;
+  color: string;
 }
 
 export interface XMarkerElement extends SketchElementBase {
