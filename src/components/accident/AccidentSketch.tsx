@@ -41,17 +41,18 @@ export function AccidentSketch() {
   const penPointsRef = useRef<{ x: number; y: number }[]>([]);
   const backgroundImgRef = useRef<HTMLImageElement | null>(null);
   const [arrowPreview, setArrowPreview] = useState<{ x1: number; y1: number; x2: number; y2: number; color: string } | null>(null);
+  // FIX #1: All hooks declared before any conditional returns
+  const lastPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Derive available car tools from otherParties
   const partyCount = currentIncident?.otherParties?.length ?? 0;
   const carCount = Math.max(2, partyCount + 1);
   const availableCars = CAR_PALETTE.slice(0, Math.min(carCount, CAR_PALETTE.length));
 
+  // FIX #3: Separate canvas sizing from rendering — initCanvas only sets dimensions + loads background
   const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
     const rect = canvas.parentElement!.getBoundingClientRect();
     canvas.width = rect.width;
     canvas.height = Math.min(rect.width * 1.2, 500);
@@ -60,17 +61,31 @@ export function AccidentSketch() {
       const img = new Image();
       img.onload = () => {
         backgroundImgRef.current = img;
-        renderCanvas(ctx, canvas.width, canvas.height, template, elements, selectedId, img);
+        // Trigger a re-render after image loads
+        const ctx = canvas.getContext('2d');
+        if (ctx) renderCanvas(ctx, canvas.width, canvas.height, template, [], null, img);
       };
       img.src = currentIncident.sketchDataUrl;
-    } else {
-      renderCanvas(ctx, canvas.width, canvas.height, template, elements, selectedId, backgroundImgRef.current);
     }
-  }, [template, currentIncident?.sketchDataUrl, elements, selectedId]);
+  }, [template, currentIncident?.sketchDataUrl]);
 
+  // Run initCanvas only on mount and template change
   useEffect(() => { initCanvas(); }, [initCanvas]);
 
-  // Re-render canvas when elements, selection, or arrow preview change
+  // FIX #5: Handle window resize / orientation change
+  useEffect(() => {
+    const handleResize = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.parentElement!.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = Math.min(rect.width * 1.2, 500);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Single render effect — redraws canvas whenever any visual state changes
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
@@ -82,8 +97,6 @@ export function AccidentSketch() {
   }, [elements, selectedId, template, arrowPreview]);
 
   if (!currentIncident) { navigate('/'); return null; }
-
-  const lastPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const getPos = (e: React.TouchEvent | React.MouseEvent) => {
     const canvas = canvasRef.current!;
@@ -214,9 +227,12 @@ export function AccidentSketch() {
           carLabel: directionPrompt.label,
           color: directionPrompt.color,
         });
+        drawStartRef.current = null;
+        setDirectionPrompt(null);
+      } else {
+        // FIX #4: Short drag — keep the prompt so user can retry
+        drawStartRef.current = null;
       }
-      drawStartRef.current = null;
-      setDirectionPrompt(null);
       return;
     }
 
@@ -264,9 +280,13 @@ export function AccidentSketch() {
     backgroundImgRef.current = null;
   };
 
+  // FIX #2: Clear selection before saving so indicator isn't baked into PNG
   const handleSave = () => {
     const canvas = canvasRef.current;
-    if (canvas) {
+    const ctx = canvas?.getContext('2d');
+    if (canvas && ctx) {
+      // Re-render without selection indicator
+      renderCanvas(ctx, canvas.width, canvas.height, template, elements, null, backgroundImgRef.current);
       setSketch(canvas.toDataURL('image/png'));
     }
     navigate('/accident/injuries');
