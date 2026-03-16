@@ -96,7 +96,7 @@ export const useAccidentStore = create<AccidentState>()(
 
     loadIncident: async (id) => {
       const incident = await db.incidents.get(id);
-      if (incident) set((state) => { state.currentIncident = incident; });
+      if (incident) set((state) => { state.currentIncident = incident; state.currentStep = 0; });
     },
 
     updateScene: (updates) => {
@@ -242,7 +242,11 @@ export const useAccidentStore = create<AccidentState>()(
 
     saveToDb: async () => {
       const incident = get().currentIncident;
-      if (incident) await db.incidents.put(incident);
+      if (incident) {
+        // Use structuredClone to snapshot current state, preventing race conditions
+        // from concurrent async writes overwriting each other
+        await db.incidents.put(structuredClone(incident));
+      }
     },
 
     completeIncident: async () => {

@@ -34,6 +34,7 @@ export function DosAndDonts() {
       <h1 className="text-xl font-bold text-navy mb-4">Quick Reference</h1>
 
       <div className="space-y-4">
+        <div className="md:grid md:grid-cols-2 md:gap-4 space-y-4 md:space-y-0">
         <div className="bg-success/5 rounded-xl p-4 border border-success/20">
           <h2 className="font-bold text-success mb-3 flex items-center gap-2"><Check size={18} /> DO</h2>
           <ul className="space-y-2">
@@ -56,6 +57,7 @@ export function DosAndDonts() {
               </li>
             ))}
           </ul>
+        </div>
         </div>
 
         <button onClick={() => navigate('/emergency-numbers')}

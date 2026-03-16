@@ -90,8 +90,17 @@ export function AccidentSketch() {
     canvas.width = rect.width;
     canvas.height = Math.min(rect.width * 1.2, 500);
     drawTemplate(ctx, template, canvas.width, canvas.height);
-    setHistory([ctx.getImageData(0, 0, canvas.width, canvas.height)]);
-  }, [template]);
+    if (currentIncident?.sketchDataUrl) {
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        setHistory([ctx.getImageData(0, 0, canvas.width, canvas.height)]);
+      };
+      img.src = currentIncident.sketchDataUrl;
+    } else {
+      setHistory([ctx.getImageData(0, 0, canvas.width, canvas.height)]);
+    }
+  }, [template, currentIncident?.sketchDataUrl]);
 
   useEffect(() => { initCanvas(); }, [initCanvas]);
 
@@ -175,7 +184,8 @@ export function AccidentSketch() {
           <canvas ref={canvasRef}
             onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
             onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw}
-            className="w-full cursor-crosshair" />
+            className="cursor-crosshair"
+            style={{ width: '100%', height: 'auto' }} />
         </div>
 
         {/* Controls */}

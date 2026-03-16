@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, Check, Mail, MessageCircle } from 'lucide-react';
 import { StepWizard } from '../layout/StepWizard';
@@ -16,12 +16,17 @@ export function Summary() {
   const { currentIncident, setDriverSignature, setOtherPartySignature, completeIncident } = useAccidentStore();
   const { loadIncidents } = useIncidentStore();
   const [generating, setGenerating] = useState(false);
+  const [photoCount, setPhotoCount] = useState(0);
 
   if (!currentIncident) { navigate('/'); return null; }
 
   const incident = currentIncident;
   const eligResult = calculateEligibility(incident.eligibility);
   const scoreColor = eligResult.score === 'green' ? 'text-success bg-success/10' : eligResult.score === 'amber' ? 'text-warning bg-warning/10' : 'text-danger bg-danger/10';
+
+  useEffect(() => {
+    db.photos.where('incidentId').equals(incident.id).count().then(setPhotoCount);
+  }, [incident.id]);
 
   const handleGeneratePDF = async () => {
     setGenerating(true);
@@ -45,8 +50,17 @@ export function Summary() {
 
   const handleShare = async (method: 'whatsapp' | 'email') => {
     const text = `SG Accident Kaki Report\nDate: ${formatDateTime(incident.createdAt)}\nLocation: ${incident.scene.location.address || 'Unknown'}`;
-    if (method === 'whatsapp') await shareViaWhatsApp(text);
-    else await shareViaEmail('Accident Report', text);
+    let file: File | undefined;
+    try {
+      const photos = await db.photos.where('incidentId').equals(incident.id).toArray();
+      const photoData = photos.map(p => ({ promptId: p.promptId, thumbnail: p.thumbnail }));
+      const blob = await generatePDF(incident, photoData);
+      file = new File([blob], `accident-report-${new Date().toISOString().slice(0, 10)}.pdf`, { type: 'application/pdf' });
+    } catch (err) {
+      console.error('PDF generation for share failed:', err);
+    }
+    if (method === 'whatsapp') await shareViaWhatsApp(text, file);
+    else await shareViaEmail('Accident Report', text, file);
   };
 
   const handleDone = async () => {
@@ -98,6 +112,38 @@ export function Summary() {
             <img src={incident.sketchDataUrl} alt="Accident sketch" className="w-full rounded-lg" />
           </div>
         )}
+
+        {/* Triage */}
+        <div className="bg-white rounded-xl p-4 border border-gray-200 space-y-1">
+          <h3 className="font-semibold text-navy">Triage</h3>
+          <div className="text-sm">
+            <div><span className="text-gray-500">Injuries reported:</span> {incident.triage.anyInjuries ? 'Yes' : incident.triage.anyInjuries === false ? 'No' : 'Not set'}</div>
+            <div><span className="text-gray-500">Ambulance called:</span> {incident.triage.ambulanceCalled ? 'Yes' : 'No'}</div>
+            <div><span className="text-gray-500">Police called:</span> {incident.triage.policeCalled ? 'Yes' : 'No'}</div>
+          </div>
+        </div>
+
+        {/* Injuries & Passengers */}
+        <div className="bg-white rounded-xl p-4 border border-gray-200 space-y-1">
+          <h3 className="font-semibold text-navy">Injuries & Passengers</h3>
+          <div className="text-sm">
+            <div><span className="text-gray-500">Any injuries:</span> {incident.injuries.anyInjuries ? 'Yes' : 'No'}</div>
+            {incident.injuries.anyInjuries && (
+              <>
+                <div><span className="text-gray-500">Ambulance called:</span> {incident.injuries.ambulanceCalled ? 'Yes' : 'No'}</div>
+                {incident.injuries.hospitalName && <div><span className="text-gray-500">Hospital:</span> {incident.injuries.hospitalName}</div>}
+              </>
+            )}
+            <div><span className="text-gray-500">Seatbelts worn:</span> {incident.injuries.allSeatbeltsWorn ? 'Yes' : 'No'}</div>
+            <div><span className="text-gray-500">Passengers:</span> {incident.injuries.passengers.length}</div>
+          </div>
+        </div>
+
+        {/* Photos */}
+        <div className="bg-white rounded-xl p-4 border border-gray-200">
+          <h3 className="font-semibold text-navy">Photos</h3>
+          <div className="text-sm"><span className="text-gray-500">Captured:</span> {photoCount}</div>
+        </div>
 
         {/* Witnesses */}
         {incident.witnesses.length > 0 && (

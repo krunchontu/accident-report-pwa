@@ -50,7 +50,7 @@ export interface Incident {
 
 export interface IncidentPhoto {
   id: string;
-  incidentId?: string;
+  incidentId: string;
   promptId: string;
   blob: Blob;
   thumbnail: string;
