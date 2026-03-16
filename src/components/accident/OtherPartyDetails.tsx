@@ -207,9 +207,9 @@ export function OtherPartyDetails() {
             <div>
               <label className={labelClass}>Insurance Type</label>
               <select className={inputClass} value={party.foreign.insuranceType} onChange={e => updateForeign({ insuranceType: e.target.value as ForeignVehicleDetails['insuranceType'] })}>
-                <option value="sg-extension">MY SG extension</option>
-                <option value="border">Border insurance</option>
-                <option value="separate-sg">Separate SG policy</option>
+                <option value="my_sg_extension">MY SG extension</option>
+                <option value="border_insurance">Border insurance</option>
+                <option value="separate_sg_policy">Separate SG policy</option>
                 <option value="none">None</option>
                 <option value="unknown">Unknown</option>
               </select>

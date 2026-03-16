@@ -10,7 +10,7 @@ export function HomeScreen() {
   const navigate = useNavigate();
   const { incidents } = useIncidentStore();
   const { profile, insurance } = useProfileStore();
-  const { startNewIncident } = useAccidentStore();
+  const { startNewIncident, loadIncident } = useAccidentStore();
 
   const inProgressIncident = incidents.find(i => i.status === 'in_progress');
   const completedIncidents = incidents.filter(i => i.status === 'completed');
@@ -22,9 +22,16 @@ export function HomeScreen() {
 
   const profileIncomplete = !profile?.fullName || !profile?.nricFin || !profile?.contactNumber;
 
+  const resumeIncident = async () => {
+    if (inProgressIncident) {
+      await loadIncident(inProgressIncident.id);
+      navigate('/accident/triage');
+    }
+  };
+
   const handleStartAccident = async () => {
     if (inProgressIncident) {
-      navigate('/accident/triage');
+      await resumeIncident();
       return;
     }
     await startNewIncident();
@@ -42,7 +49,7 @@ export function HomeScreen() {
       {/* In-progress banner */}
       {inProgressIncident && (
         <button
-          onClick={() => navigate('/accident/triage')}
+          onClick={resumeIncident}
           className="w-full bg-warning/10 border-2 border-warning rounded-xl p-4 text-left"
         >
           <div className="flex items-center gap-3">
