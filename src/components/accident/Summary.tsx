@@ -6,8 +6,9 @@ import { SignaturePad } from './SignaturePad';
 import { useAccidentStore } from '../../store/useAccidentStore';
 import { useIncidentStore } from '../../store/useIncidentStore';
 import { calculateEligibility } from '../../utils/eligibilityScorer';
-import { generatePDF } from '../../utils/pdfExport';
-import { shareViaWhatsApp, shareViaEmail } from '../../utils/shareHelper';
+// Dynamic imports to keep these out of the main bundle
+const loadPdfExport = () => import('../../utils/pdfExport');
+const loadShareHelper = () => import('../../utils/shareHelper');
 import { formatDateTime } from '../../utils/dateHelpers';
 import { db } from '../../db/database';
 
@@ -28,12 +29,17 @@ export function Summary() {
     db.photos.where('incidentId').equals(incident.id).count().then(setPhotoCount);
   }, [incident.id]);
 
+  const buildPdfBlob = async () => {
+    const photos = await db.photos.where('incidentId').equals(incident.id).toArray();
+    const photoData = photos.map(p => ({ promptId: p.promptId, thumbnail: p.thumbnail }));
+    const { generatePDF } = await loadPdfExport();
+    return generatePDF(incident, photoData);
+  };
+
   const handleGeneratePDF = async () => {
     setGenerating(true);
     try {
-      const photos = await db.photos.where('incidentId').equals(incident.id).toArray();
-      const photoData = photos.map(p => ({ promptId: p.promptId, thumbnail: p.thumbnail }));
-      const blob = await generatePDF(incident, photoData);
+      const blob = await buildPdfBlob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -52,13 +58,12 @@ export function Summary() {
     const text = `SG Accident Kaki Report\nDate: ${formatDateTime(incident.createdAt)}\nLocation: ${incident.scene.location.address || 'Unknown'}`;
     let file: File | undefined;
     try {
-      const photos = await db.photos.where('incidentId').equals(incident.id).toArray();
-      const photoData = photos.map(p => ({ promptId: p.promptId, thumbnail: p.thumbnail }));
-      const blob = await generatePDF(incident, photoData);
+      const blob = await buildPdfBlob();
       file = new File([blob], `accident-report-${new Date().toISOString().slice(0, 10)}.pdf`, { type: 'application/pdf' });
     } catch (err) {
       console.error('PDF generation for share failed:', err);
     }
+    const { shareViaWhatsApp, shareViaEmail } = await loadShareHelper();
     if (method === 'whatsapp') await shareViaWhatsApp(text, file);
     else await shareViaEmail('Accident Report', text, file);
   };

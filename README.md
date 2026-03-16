@@ -12,9 +12,9 @@ After a traffic accident in Singapore you have **24 hours** to file a Singapore 
 - **Triage screen** — are there injuries? Do you need 995 / 999?
 - **Emergency flow** — direct-dial buttons for Police (999) and Ambulance (995)
 - **Scene details** — date/time, GPS location with reverse-geocoding, weather, road & traffic conditions
-- **Photo capture** — 20 prompted shots (4× wide-angle scene, vehicle damage, plates, licences, road markings, dashcam stills, injuries) with GPS and compass metadata stamped on every image
+- **Photo capture** — 20 prompted shots (4× wide-angle scene, vehicle damage, plates, licences, road markings, dashcam stills, injuries) with GPS and compass metadata stamped on every image; auto-advances to next required prompt after each capture
 - **Other party details** — driver info, vehicle registration, insurer & policy, visible damage; full **foreign vehicle** sub-form (nationality, VEP, Autopass, border insurance, Malaysian MIB)
-- **Eligibility self-check** — 30 rules (licence validity, insurance status, alcohol/drugs, named driver, vehicle mods, etc.) scored as green / amber / red with plain-English consequences
+- **Eligibility self-check** — 30 rules (licence validity, insurance status, alcohol/drugs, named driver, vehicle mods, etc.) scored as green / amber / red with plain-English consequences; auto-populates answers from your saved profile
 - **Witness capture** — name, contact, free-text statement
 - **Accident sketch** — canvas drawing tool with vehicle icons (Car A/B), directional arrows, impact X markers, and freehand pen
 - **Injury & passenger log** — seatbelt/child-seat status, hospital name, per-passenger injury notes
@@ -48,6 +48,10 @@ Countdown timers for every post-accident obligation:
 - Service Worker with Workbox — all assets cached, Nominatim geocoding cached for 7 days
 - All data stored locally in **IndexedDB** via Dexie (no server, no account needed)
 - Offline status indicator in the UI
+- Resume in-progress incident to the exact step you left off
+- Setup wizard auto-saves on every field change (debounced)
+- Input validation for NRIC/FIN, SG phone numbers, email, and vehicle registration
+- Root error boundary prevents white-screen crashes
 
 ## Tech Stack
 
@@ -98,8 +102,8 @@ src/
 ## Getting Started
 
 ```bash
-# Install dependencies
-npm install
+# Install dependencies (--legacy-peer-deps required for Tailwind CSS v4 peer dep)
+npm install --legacy-peer-deps
 
 # Start dev server
 npm run dev
@@ -155,6 +159,30 @@ The app runs at `http://localhost:5173` by default. On first launch you'll see a
 - **SPEC-005:** Added missing `sleepDeprived` eligibility question ("Were you sleep-deprived?") and amber-severity rule
 - **SPEC-006:** Camera hook now detects iOS Safari file-picker cancellation via window focus listener, preventing the Promise from hanging indefinitely
 - **SPEC-007:** EligibilityCheck type assertion replaced with compile-time `BooleanFields<T>` constraint — eliminates unsafe `as boolean | null` cast
+
+### v1.2.0 — Review Fixes
+
+**HTML & accessibility:**
+- **UGLY-001:** Removed stale `<link rel="manifest" href="/manifest.json">` from `index.html` — was causing a duplicate manifest (404 + correct Workbox-generated one)
+- **UGLY-002:** Removed `user-scalable=no` and `maximum-scale=1.0` from viewport meta — restores WCAG 2.1 SC 1.4.4 compliance (pinch-to-zoom)
+
+**Performance:**
+- **UGLY-003:** PDF export (`jsPDF` + `html2canvas`) and share helpers are now dynamically imported in `Summary.tsx` — shareHelper chunk dropped from 404 KB to 0.6 KB; PDF libraries load only when the user taps "Generate PDF" or "Share"
+- **UGLY-004:** `saveToDb()` is now debounced by 300 ms — prevents IndexedDB writes on every keystroke during rapid form entry
+- **BUG-B03:** `calculateEligibility` results on HomeScreen are memoized via `useMemo` — avoids re-running the 30-rule engine on every render
+
+**Robustness:**
+- **UGLY-005:** Added a root `ErrorBoundary` component — catches unhandled React errors and shows a recovery screen instead of a blank page
+- **BAD-008:** All `saveToDb()` / `completeIncident()` calls are now wrapped in `try/catch` with `console.error` — prevents silent data loss on IndexedDB write failure
+- **UGLY-006:** Replaced unsafe `Partial<T> as T` casts in `SetupWizard` with explicit full-object construction using fallback defaults — eliminates runtime risk from missing fields
+
+**UX improvements:**
+- **BAD-001:** Documented `--legacy-peer-deps` in README install instructions
+- **BAD-002:** Added input validation utilities (`isValidNRIC`, `isValidSGPhone`, `isValidEmail`, `isValidVehicleReg`) with inline error hints in the setup wizard
+- **BAD-004:** Eligibility check now pre-populates answers from the user's saved profile, insurance, and vehicle data (licence status, insurance expiry, road tax, ownership)
+- **BAD-005:** Setup wizard auto-saves all fields to IndexedDB on change via a 500 ms debounce — crash-safe even if the user doesn't tap "Next"
+- **BAD-007:** PhotoCapture auto-scrolls to the next uncaptured required prompt after each photo is taken
+- **BAD-009:** Resuming an in-progress incident now navigates to the last visited wizard step (tracked via `StepWizard`), instead of always restarting at triage
 
 ## License
 

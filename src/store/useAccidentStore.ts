@@ -5,6 +5,9 @@ import type { Incident, OtherParty, Witness, DeadlineStatus } from '../types/inc
 import type { EligibilityCheck } from '../types/eligibility';
 import { DEADLINES } from '../constants/deadlines';
 
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+const SAVE_DEBOUNCE_MS = 300;
+
 function createEmptyEligibility(): EligibilityCheck {
   return {
     hasValidLicence: null, correctLicenceClass: null, licenceExpired: null,
@@ -58,6 +61,7 @@ function createNewIncident(): Incident {
 interface AccidentState {
   currentIncident: Incident | null;
   currentStep: number;
+  lastRoute: string | null;
   startNewIncident: () => Promise<Incident>;
   loadIncident: (id: string) => Promise<void>;
   updateScene: (updates: Partial<Incident['scene']>) => void;
@@ -77,6 +81,7 @@ interface AccidentState {
   updateDeadline: (id: string, completed: boolean) => void;
   setAdditionalNotes: (notes: string) => void;
   setCurrentStep: (step: number) => void;
+  setLastRoute: (route: string) => void;
   saveToDb: () => Promise<void>;
   completeIncident: () => Promise<void>;
 }
@@ -85,6 +90,7 @@ export const useAccidentStore = create<AccidentState>()(
   immer((set, get) => ({
     currentIncident: null,
     currentStep: 0,
+    lastRoute: null,
 
     startNewIncident: async () => {
       const incident = createNewIncident();
@@ -239,13 +245,22 @@ export const useAccidentStore = create<AccidentState>()(
       set((state) => { state.currentStep = step; });
     },
 
+    setLastRoute: (route) => {
+      set((state) => { state.lastRoute = route; });
+    },
+
     saveToDb: async () => {
-      const incident = get().currentIncident;
-      if (incident) {
-        // Use structuredClone to snapshot current state, preventing race conditions
-        // from concurrent async writes overwriting each other
-        await db.incidents.put(structuredClone(incident));
-      }
+      if (saveTimer) clearTimeout(saveTimer);
+      saveTimer = setTimeout(async () => {
+        const incident = get().currentIncident;
+        if (incident) {
+          try {
+            await db.incidents.put(structuredClone(incident));
+          } catch (err) {
+            console.error('Failed to save incident to IndexedDB:', err);
+          }
+        }
+      }, SAVE_DEBOUNCE_MS);
     },
 
     completeIncident: async () => {
@@ -254,7 +269,16 @@ export const useAccidentStore = create<AccidentState>()(
         state.currentIncident.status = 'completed';
         state.currentIncident.completedAt = new Date().toISOString();
       });
-      await get().saveToDb();
+      // Flush immediately — don't debounce completion
+      if (saveTimer) clearTimeout(saveTimer);
+      const incident = get().currentIncident;
+      if (incident) {
+        try {
+          await db.incidents.put(structuredClone(incident));
+        } catch (err) {
+          console.error('Failed to save completed incident:', err);
+        }
+      }
     },
   }))
 );

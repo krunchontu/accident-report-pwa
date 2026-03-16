@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, Check, RotateCcw } from 'lucide-react';
 import { StepWizard } from '../layout/StepWizard';
@@ -34,6 +34,8 @@ export function PhotoCapture() {
   const requiredCount = PHOTO_PROMPTS.filter(p => p.required).length;
   const capturedRequiredCount = PHOTO_PROMPTS.filter(p => p.required && capturedPhotos.has(p.id)).length;
 
+  const promptRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
   const handleCapture = async (promptId: string) => {
     const result = await capture();
     if (!result) return;
@@ -52,7 +54,15 @@ export function PhotoCapture() {
     };
 
     await db.photos.put(photo);
-    setCapturedPhotos(prev => new Map(prev).set(promptId, photo));
+    const newMap = new Map(capturedPhotos).set(promptId, photo);
+    setCapturedPhotos(newMap);
+
+    // Auto-advance to next uncaptured required photo
+    const nextPrompt = PHOTO_PROMPTS.find(p => p.required && !newMap.has(p.id));
+    if (nextPrompt) {
+      const el = promptRefs.current.get(nextPrompt.id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   };
 
   const handleRetake = async (promptId: string) => {
@@ -96,7 +106,7 @@ export function PhotoCapture() {
               {prompts.map(prompt => {
                 const captured = capturedPhotos.get(prompt.id);
                 return (
-                  <div key={prompt.id} className="bg-white rounded-xl p-4 border border-gray-200">
+                  <div key={prompt.id} ref={el => { if (el) promptRefs.current.set(prompt.id, el); }} className="bg-white rounded-xl p-4 border border-gray-200">
                     <div className="flex items-start gap-3">
                       {captured ? (
                         <img src={captured.thumbnail} alt="" className="w-16 h-16 rounded-lg object-cover shrink-0" />
