@@ -98,8 +98,8 @@ src/
 ## Getting Started
 
 ```bash
-# Install dependencies
-npm install
+# Install dependencies (--legacy-peer-deps required for Tailwind CSS v4 peer dep)
+npm install --legacy-peer-deps
 
 # Start dev server
 npm run dev

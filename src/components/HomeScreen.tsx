@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, Eye, Clock, ShieldAlert } from 'lucide-react';
 import { useIncidentStore } from '../store/useIncidentStore';
@@ -15,6 +16,15 @@ export function HomeScreen() {
   const inProgressIncident = incidents.find(i => i.status === 'in_progress');
   const completedIncidents = incidents.filter(i => i.status === 'completed');
 
+  // Memoize eligibility scores to avoid recalculating on every render
+  const eligibilityScores = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof calculateEligibility>>();
+    for (const inc of completedIncidents) {
+      map.set(inc.id, calculateEligibility(inc.eligibility));
+    }
+    return map;
+  }, [completedIncidents]);
+
   const insuranceExpiringSoon = insurance?.policyExpiry
     ? differenceInDays(parseISO(insurance.policyExpiry), new Date()) <= 30 &&
       differenceInDays(parseISO(insurance.policyExpiry), new Date()) >= 0
@@ -22,10 +32,12 @@ export function HomeScreen() {
 
   const profileIncomplete = !profile?.fullName || !profile?.nricFin || !profile?.contactNumber;
 
+  const { lastRoute } = useAccidentStore();
+
   const resumeIncident = async () => {
     if (inProgressIncident) {
       await loadIncident(inProgressIncident.id);
-      navigate('/accident/triage');
+      navigate(lastRoute || '/accident/triage');
     }
   };
 
@@ -122,7 +134,8 @@ export function HomeScreen() {
                 <div className="flex items-center justify-between">
                   <div className="font-medium">{incident.scene.location.address || 'Unknown location'}</div>
                   {(() => {
-                    const elig = calculateEligibility(incident.eligibility);
+                    const elig = eligibilityScores.get(incident.id);
+                    if (!elig) return null;
                     const color = elig.score === 'green' ? 'text-success bg-success/10' : elig.score === 'amber' ? 'text-warning bg-warning/10' : 'text-danger bg-danger/10';
                     return <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${color}`}>{elig.score.toUpperCase()}</span>;
                   })()}

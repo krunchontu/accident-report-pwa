@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { ChevronLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAccidentStore } from '../../store/useAccidentStore';
 
 interface StepWizardProps {
   currentStep: number;
@@ -18,6 +20,13 @@ export function StepWizard({
   onBack, onNext, nextLabel = 'Next', nextDisabled = false, showNext = true,
 }: StepWizardProps) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const setLastRoute = useAccidentStore(s => s.setLastRoute);
+
+  // Track the last visited route for resume functionality
+  useEffect(() => {
+    setLastRoute(location.pathname);
+  }, [location.pathname, setLastRoute]);
 
   return (
     <div className="flex flex-col h-full min-h-screen bg-gray-50">

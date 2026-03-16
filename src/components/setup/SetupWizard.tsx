@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronRight, Shield, Car, FileCheck, Users, Check } from 'lucide-react';
 import { useProfileStore } from '../../store/useProfileStore';
+import { getValidationError } from '../../utils/validation';
 import type { UserProfile, VehicleProfile, InsuranceProfile, FamilyDriver } from '../../types/profile';
 
 const SG_INSURERS = [
@@ -44,14 +45,61 @@ export function SetupWizard() {
   };
 
   const saveCurrentStep = async (currentStep: number) => {
+    const now = new Date().toISOString();
     if (currentStep >= 1) {
-      await saveProfile({ ...profile, updatedAt: new Date().toISOString() } as UserProfile);
+      const p: UserProfile = {
+        id: profile.id || crypto.randomUUID(),
+        fullName: profile.fullName || '',
+        nricFin: profile.nricFin || '',
+        contactNumber: profile.contactNumber || '',
+        email: profile.email || '',
+        address: profile.address || '',
+        licenceNumber: profile.licenceNumber || '',
+        licenceClass: profile.licenceClass || '3',
+        licenceExpiryDate: profile.licenceExpiryDate || '',
+        yearsPassed: profile.yearsPassed || 0,
+        hasSpectacleCondition: profile.hasSpectacleCondition || false,
+        medicalConditions: profile.medicalConditions || '',
+        createdAt: profile.createdAt || now,
+        updatedAt: now,
+      };
+      await saveProfile(p);
     }
     if (currentStep >= 2) {
-      await saveVehicle(vehicle as VehicleProfile);
+      const v: VehicleProfile = {
+        id: vehicle.id || crypto.randomUUID(),
+        registrationNumber: vehicle.registrationNumber || '',
+        make: vehicle.make || '',
+        model: vehicle.model || '',
+        year: vehicle.year || new Date().getFullYear(),
+        colour: vehicle.colour || '',
+        engineChassisNumber: vehicle.engineChassisNumber || '',
+        roadTaxExpiry: vehicle.roadTaxExpiry || '',
+        lastInspectionDate: vehicle.lastInspectionDate || '',
+        ownership: vehicle.ownership || 'own',
+        modifications: vehicle.modifications || '',
+      };
+      await saveVehicle(v);
     }
     if (currentStep >= 3) {
-      const ins = { ...insurance, vehicleId: vehicle.id } as InsuranceProfile;
+      const ins: InsuranceProfile = {
+        id: insurance.id || crypto.randomUUID(),
+        vehicleId: vehicle.id || '',
+        insurerName: insurance.insurerName || '',
+        policyNumber: insurance.policyNumber || '',
+        policyType: insurance.policyType || 'comprehensive',
+        policyExpiry: insurance.policyExpiry || '',
+        driverType: insurance.driverType || 'named',
+        excessAmount: insurance.excessAmount || 0,
+        youngDriverExcess: insurance.youngDriverExcess || 0,
+        ncdPercentage: insurance.ncdPercentage || 0,
+        claimsHotline: insurance.claimsHotline || '',
+        workshopType: insurance.workshopType || 'authorised',
+        workshopPanel: insurance.workshopPanel || '',
+        namedDrivers: insurance.namedDrivers || [],
+        minDriverAge: insurance.minDriverAge ?? null,
+        minDrivingExperience: insurance.minDrivingExperience ?? null,
+      };
       await saveInsurance(ins);
     }
     if (currentStep >= 4 && drivers.length > 0) {
@@ -59,7 +107,19 @@ export function SetupWizard() {
     }
   };
 
+  // Auto-save with debounce — persists on every field change
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => {
+    if (step >= 1) {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => { saveCurrentStep(step); }, 500);
+    }
+    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
+  }, [profile, vehicle, insurance, drivers]);
+
   const handleFinish = async () => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     await saveCurrentStep(4);
     setSetupComplete(true);
   };
@@ -119,14 +179,23 @@ export function SetupWizard() {
             <div>
               <label className={labelClass}>NRIC / FIN Number</label>
               <input className={inputClass} value={profile.nricFin || ''} onChange={e => setProfile({...profile, nricFin: e.target.value.toUpperCase()})} placeholder="S1234567A" />
+              {profile.nricFin && getValidationError('nricFin', profile.nricFin) && (
+                <p className="text-xs text-danger mt-1">{getValidationError('nricFin', profile.nricFin)}</p>
+              )}
             </div>
             <div>
               <label className={labelClass}>Contact Number</label>
               <input className={inputClass} type="tel" value={profile.contactNumber || ''} onChange={e => setProfile({...profile, contactNumber: e.target.value})} placeholder="9123 4567" />
+              {profile.contactNumber && getValidationError('contactNumber', profile.contactNumber) && (
+                <p className="text-xs text-danger mt-1">{getValidationError('contactNumber', profile.contactNumber)}</p>
+              )}
             </div>
             <div>
               <label className={labelClass}>Email</label>
               <input className={inputClass} type="email" value={profile.email || ''} onChange={e => setProfile({...profile, email: e.target.value})} placeholder="you@email.com" />
+              {profile.email && getValidationError('email', profile.email) && (
+                <p className="text-xs text-danger mt-1">{getValidationError('email', profile.email)}</p>
+              )}
             </div>
             <div>
               <label className={labelClass}>Address</label>
@@ -173,6 +242,9 @@ export function SetupWizard() {
             <div>
               <label className={labelClass}>Registration Number</label>
               <input className={inputClass} value={vehicle.registrationNumber || ''} onChange={e => setVehicle({...vehicle, registrationNumber: e.target.value.toUpperCase()})} placeholder="SBA1234X" />
+              {vehicle.registrationNumber && getValidationError('registrationNumber', vehicle.registrationNumber) && (
+                <p className="text-xs text-danger mt-1">{getValidationError('registrationNumber', vehicle.registrationNumber)}</p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

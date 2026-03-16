@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ShieldCheck, ShieldAlert, ShieldX, AlertTriangle } from 'lucide-react';
 import { StepWizard } from '../layout/StepWizard';
 import { useAccidentStore } from '../../store/useAccidentStore';
+import { useProfileStore } from '../../store/useProfileStore';
 import { calculateEligibility } from '../../utils/eligibilityScorer';
 import { ELIGIBILITY_RULES } from '../../constants/eligibilityRules';
 import type { EligibilityCheck as EligibilityCheckType } from '../../types/eligibility';
@@ -50,7 +51,57 @@ const QUESTIONS: Question[] = [
 export function EligibilityCheck() {
   const navigate = useNavigate();
   const { currentIncident, updateEligibility } = useAccidentStore();
+  const { profile, insurance, vehicle } = useProfileStore();
   const [showResult, setShowResult] = useState(false);
+  const [prePopulated, setPrePopulated] = useState(false);
+
+  // Pre-populate from profile store on first render
+  useEffect(() => {
+    if (!currentIncident || prePopulated) return;
+    const elig = currentIncident.eligibility;
+    const updates: Partial<EligibilityCheckType> = {};
+
+    // Licence: if profile has licence info and field is still null, pre-fill
+    if (elig.hasValidLicence === null && profile?.licenceNumber) {
+      updates.hasValidLicence = true;
+    }
+    if (elig.licenceExpired === null && profile?.licenceExpiryDate) {
+      updates.licenceExpired = new Date(profile.licenceExpiryDate) < new Date();
+    }
+    if (elig.spectaclesWorn === null && profile?.hasSpectacleCondition === false) {
+      updates.spectaclesWorn = null; // N/A — no condition
+    }
+
+    // Insurance
+    if (elig.hasInsurance === null && insurance?.policyNumber) {
+      updates.hasInsurance = true;
+    }
+    if (elig.insuranceExpired === null && insurance?.policyExpiry) {
+      updates.insuranceExpired = new Date(insurance.policyExpiry) < new Date();
+    }
+    if (elig.coverageType === null && insurance?.policyType) {
+      updates.coverageType = insurance.policyType;
+    }
+    if (elig.isNamedDriver === null && insurance?.driverType) {
+      updates.isNamedDriver = insurance.driverType === 'named' ? true : null;
+    }
+
+    // Ownership
+    if (elig.isOwner === null && vehicle?.ownership) {
+      updates.isOwner = vehicle.ownership === 'own';
+      updates.vehicleType = vehicle.ownership;
+    }
+
+    // Vehicle compliance
+    if (elig.roadTaxValid === null && vehicle?.roadTaxExpiry) {
+      updates.roadTaxValid = new Date(vehicle.roadTaxExpiry) >= new Date();
+    }
+
+    if (Object.keys(updates).length > 0) {
+      updateEligibility(updates);
+    }
+    setPrePopulated(true);
+  }, [currentIncident, prePopulated, profile, insurance, vehicle, updateEligibility]);
 
   if (!currentIncident) { navigate('/'); return null; }
 
