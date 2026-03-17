@@ -11,7 +11,7 @@ export const ELIGIBILITY_RULES: EligibilityRule[] = [
   { field: "hasInsurance", failValue: false, severity: "red", consequence: "No insurance = CLAIM DENIED + criminal offence under MV(TPRC) Act", category: "Insurance" },
   { field: "insuranceExpired", failValue: true, severity: "red", consequence: "Expired insurance = CLAIM DENIED + criminal offence", category: "Insurance" },
   { field: "correctUsage", failValue: false, severity: "red", consequence: "Vehicle used outside insured purpose = CLAIM DENIED", category: "Usage" },
-  { field: "doingRideHailing", failValue: true, severity: "red", consequence: "Ride-hailing without PHPC insurance = CLAIM DENIED", category: "Usage" },
+  { field: "doingRideHailing", failValue: true, severity: "amber", consequence: "Ride-hailing — ensure you have PHPC/PHV insurance, otherwise claim will be denied", category: "Usage" },
   { field: "pdlWithInstructor", failValue: false, severity: "red", consequence: "PDL holder without instructor = CLAIM DENIED", category: "Licensing" },
   { field: "usingPhone", failValue: true, severity: "amber", consequence: "Phone use = possible denial or contributory negligence", category: "Driver Fitness" },
   { field: "fatigued", failValue: true, severity: "amber", consequence: "Driving while fatigued may constitute negligence", category: "Driver Fitness" },
