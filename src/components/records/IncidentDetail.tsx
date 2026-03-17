@@ -72,6 +72,18 @@ export function IncidentDetail() {
           </div>
         </div>
 
+        {incident.reporter && (
+          <div className="bg-white rounded-xl p-4 border border-gray-200">
+            <h3 className="font-semibold text-sm text-gray-700 mb-2">Your Details</h3>
+            <div className="text-sm space-y-1">
+              <div>{incident.reporter.fullName}</div>
+              <div className="text-gray-500">{incident.reporter.vehicleRegistration} — {incident.reporter.vehicleMakeModel}</div>
+              <div className="text-gray-500">Insurer: {incident.reporter.insurerName} — {incident.reporter.policyNumber}</div>
+              <div className="text-gray-500">Contact: {incident.reporter.contactNumber}</div>
+            </div>
+          </div>
+        )}
+
         {incident.otherParties.map((p, i) => (
           <div key={p.id} className="bg-white rounded-xl p-4 border border-gray-200">
             <h3 className="font-semibold text-sm text-gray-700 mb-2">Other Party {i + 1}{p.isForeignVehicle ? ' (Foreign)' : ''}</h3>

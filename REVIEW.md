@@ -21,13 +21,15 @@
 
 ### Feature Coverage
 - Full 8-step wizard: Triage → Scene → Photos → Other Party → Eligibility → Witnesses → Sketch → Injuries → Summary
+- Reporter profile snapshot — personal/vehicle/insurance details auto-captured into each incident from saved profile
 - 26 photo prompts (13 required, 13 optional) with GPS + compass metadata
 - 27 scoring rules (11 red, 16 amber) with auto-population from profile
+- Reporter details (name, NRIC, vehicle, insurance) included in Summary, PDF export, and saved record views
 - Foreign vehicle module (nationality, VEP, Autopass, border insurance, claims agent, hit-and-run)
 - Multi-party support with tab navigation
 - Accident sketch: 5 road templates, 5 drawing tools, undo/clear with confirmation
 - Deadline tracker: 8 deadlines with real-time countdown
-- PDF export covering all sections
+- PDF export covering all sections including reporter's own details
 - Witness/passenger flow: separate 3-step reduced flow
 - Resume to last visited wizard step (not triage)
 - Setup wizard auto-saves all fields (500 ms debounce)
@@ -141,6 +143,7 @@ All issues from the original review have been resolved:
 | BAD-008 | `saveToDb` has no error handling | try/catch with console.error on all DB writes |
 | BAD-009 | Resume always goes to triage | Navigates to `lastRoute` (tracked by StepWizard) |
 | BUG-B03 | `calculateEligibility` called on every render | Memoized with `useMemo` on HomeScreen |
+| — | Profile data not included in incident report or PDF | Reporter snapshot auto-captured into each incident, shown in Summary, PDF, and saved records |
 
 ---
 

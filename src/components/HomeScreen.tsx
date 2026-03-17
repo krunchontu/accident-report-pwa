@@ -6,11 +6,43 @@ import { useProfileStore } from '../store/useProfileStore';
 import { useAccidentStore } from '../store/useAccidentStore';
 import { differenceInDays, parseISO } from 'date-fns';
 import { calculateEligibility } from '../utils/eligibilityScorer';
+import type { ReporterSnapshot } from '../types/incident';
+import type { UserProfile, VehicleProfile, InsuranceProfile } from '../types/profile';
+
+function buildReporterSnapshot(
+  profile: UserProfile | null,
+  vehicle: VehicleProfile | null,
+  insurance: InsuranceProfile | null,
+): ReporterSnapshot | undefined {
+  if (!profile) return undefined;
+  return {
+    fullName: profile.fullName,
+    nricFin: profile.nricFin,
+    contactNumber: profile.contactNumber,
+    email: profile.email,
+    address: profile.address,
+    licenceNumber: profile.licenceNumber,
+    licenceClass: profile.licenceClass,
+    licenceExpiryDate: profile.licenceExpiryDate,
+    vehicleRegistration: vehicle?.registrationNumber ?? '',
+    vehicleMakeModel: vehicle ? `${vehicle.make} ${vehicle.model}`.trim() : '',
+    vehicleColour: vehicle?.colour ?? '',
+    vehicleYear: vehicle?.year ?? 0,
+    ownership: vehicle?.ownership ?? '',
+    insurerName: insurance?.insurerName ?? '',
+    policyNumber: insurance?.policyNumber ?? '',
+    policyType: insurance?.policyType ?? '',
+    policyExpiry: insurance?.policyExpiry ?? '',
+    claimsHotline: insurance?.claimsHotline ?? '',
+    ncdPercentage: insurance?.ncdPercentage ?? 0,
+    workshopType: insurance?.workshopType ?? '',
+  };
+}
 
 export function HomeScreen() {
   const navigate = useNavigate();
   const { incidents } = useIncidentStore();
-  const { profile, insurance } = useProfileStore();
+  const { profile, vehicle, insurance } = useProfileStore();
   const { startNewIncident, loadIncident } = useAccidentStore();
 
   const inProgressIncident = incidents.find(i => i.status === 'in_progress');
@@ -46,12 +78,14 @@ export function HomeScreen() {
       await resumeIncident();
       return;
     }
-    await startNewIncident();
+    const reporter = buildReporterSnapshot(profile, vehicle, insurance);
+    await startNewIncident(reporter);
     navigate('/accident/triage');
   };
 
   const handleWitnessReport = async () => {
-    await startNewIncident();
+    const reporter = buildReporterSnapshot(profile, vehicle, insurance);
+    await startNewIncident(reporter);
     navigate('/witness');
   };
 

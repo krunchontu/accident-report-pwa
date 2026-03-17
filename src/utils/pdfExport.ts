@@ -86,6 +86,24 @@ export async function generatePDF(incident: Incident, photos: { promptId: string
     y = photoY + 25;
   }
 
+  // Reporter Details
+  if (incident.reporter) {
+    addSection('Your Details (Reporting Driver)');
+    addText(`Name: ${incident.reporter.fullName || 'N/A'}`);
+    addText(`NRIC/FIN: ${incident.reporter.nricFin || 'N/A'}`);
+    addText(`Contact: ${incident.reporter.contactNumber || 'N/A'}`);
+    addText(`Email: ${incident.reporter.email || 'N/A'}`);
+    addText(`Address: ${incident.reporter.address || 'N/A'}`);
+    addText(`Licence: ${incident.reporter.licenceNumber || 'N/A'} (Class ${incident.reporter.licenceClass || 'N/A'})`);
+    addText(`Licence Expiry: ${incident.reporter.licenceExpiryDate || 'N/A'}`);
+    addText(`Vehicle: ${incident.reporter.vehicleRegistration || 'N/A'} — ${incident.reporter.vehicleMakeModel || 'N/A'}`);
+    addText(`Colour: ${incident.reporter.vehicleColour || 'N/A'} | Year: ${incident.reporter.vehicleYear || 'N/A'}`);
+    addText(`Insurer: ${incident.reporter.insurerName || 'N/A'} — Policy: ${incident.reporter.policyNumber || 'N/A'}`);
+    addText(`Policy Type: ${incident.reporter.policyType || 'N/A'} | Expiry: ${incident.reporter.policyExpiry || 'N/A'}`);
+    addText(`NCD: ${incident.reporter.ncdPercentage}%`);
+    addText(`Claims Hotline: ${incident.reporter.claimsHotline || 'N/A'}`);
+  }
+
   // Other Parties
   for (let i = 0; i < incident.otherParties.length; i++) {
     const party = incident.otherParties[i];

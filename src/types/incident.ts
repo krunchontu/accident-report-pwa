@@ -45,6 +45,7 @@ export interface Incident {
   otherPartySignature: string | null;
   deadlines: DeadlineStatus[];
   additionalNotes: string;
+  reporter: ReporterSnapshot | null;
 }
 
 export interface IncidentPhoto {
@@ -121,6 +122,29 @@ export interface PassengerInfo {
   contactNumber: string;
   injured: boolean;
   injuryDescription: string;
+}
+
+export interface ReporterSnapshot {
+  fullName: string;
+  nricFin: string;
+  contactNumber: string;
+  email: string;
+  address: string;
+  licenceNumber: string;
+  licenceClass: string;
+  licenceExpiryDate: string;
+  vehicleRegistration: string;
+  vehicleMakeModel: string;
+  vehicleColour: string;
+  vehicleYear: number;
+  ownership: string;
+  insurerName: string;
+  policyNumber: string;
+  policyType: string;
+  policyExpiry: string;
+  claimsHotline: string;
+  ncdPercentage: number;
+  workshopType: string;
 }
 
 export interface DeadlineStatus {
