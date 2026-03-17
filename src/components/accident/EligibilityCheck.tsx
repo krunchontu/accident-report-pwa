@@ -42,7 +42,7 @@ const QUESTIONS: Question[] = [
   { field: 'unauthorisedMods', question: 'Are there undeclared modifications?', category: 'Vehicle Compliance', invertDisplay: true },
   { field: 'tyresLegal', question: 'Are tyres in legal condition?', category: 'Vehicle Compliance' },
   { field: 'correctUsage', question: 'Is the vehicle used for its insured purpose?', category: 'Usage' },
-  { field: 'doingRideHailing', question: 'Were you doing ride-hailing?', category: 'Usage', invertDisplay: true },
+  { field: 'doingRideHailing', question: 'Were you doing ride-hailing without PHPC/PHV insurance?', category: 'Usage', invertDisplay: true },
   { field: 'doingDelivery', question: 'Were you doing commercial delivery?', category: 'Usage', invertDisplay: true },
   { field: 'exceedingCapacity', question: 'Were you exceeding passenger capacity?', category: 'Usage', invertDisplay: true },
   { field: 'illegallyParked', question: 'Were you illegally parked?', category: 'Usage', invertDisplay: true },

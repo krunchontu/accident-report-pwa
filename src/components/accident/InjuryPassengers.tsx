@@ -78,12 +78,13 @@ export function InjuryPassengers() {
         </div>
 
         <div>
-          <label className={labelClass}>Child passengers in child seats?</label>
+          <label className={labelClass}>Were all child passengers in approved child restraints?</label>
+          <p className="text-xs text-gray-500 mb-2">Children below 1.35m must use an approved child seat/booster. Yes = properly restrained, No = not restrained (an offence that may affect liability).</p>
           <div className="flex gap-2">
             <button onClick={() => updateInjuries({ childSeatsUsed: true })} className={ynClass(injuries.childSeatsUsed as boolean, true)}>Yes</button>
             <button onClick={() => updateInjuries({ childSeatsUsed: false })} className={ynClass(injuries.childSeatsUsed as boolean, false)}>No</button>
             <button onClick={() => updateInjuries({ childSeatsUsed: null })}
-              className={`flex-1 py-3 rounded-xl text-sm font-medium border-2 transition-colors text-center ${injuries.childSeatsUsed === null ? 'border-gray-400 bg-gray-200 text-gray-700' : 'border-gray-200 bg-white text-gray-400'}`}>N/A</button>
+              className={`flex-1 py-3 rounded-xl text-sm font-medium border-2 transition-colors text-center ${injuries.childSeatsUsed === null ? 'border-gray-400 bg-gray-200 text-gray-700' : 'border-gray-200 bg-white text-gray-400'}`}>No children</button>
           </div>
         </div>
 
