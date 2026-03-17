@@ -124,4 +124,4 @@ The app runs at `http://localhost:5173` by default. On first launch you'll see a
 
 ## License
 
-Private — not open source.
+[MIT](LICENSE)
