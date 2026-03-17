@@ -2,36 +2,48 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { capturePhotoMetadata, generateThumbnail } from '../utils/photoMetadata';
 import type { PhotoMetadata } from '../utils/photoMetadata';
 
-interface CameraResult {
+export interface CameraResult {
   blob: Blob;
   thumbnail: string;
   metadata: PhotoMetadata;
 }
 
+type CaptureMode = 'camera' | 'gallery';
+
 export function useCamera() {
   const [isCapturing, setIsCapturing] = useState(false);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const resolveRef = useRef<((result: CameraResult | null) => void) | null>(null);
 
-  // Clean up DOM element on unmount
+  // Clean up DOM elements on unmount
   useEffect(() => {
     return () => {
-      if (inputRef.current) {
-        inputRef.current.remove();
-        inputRef.current = null;
+      if (cameraInputRef.current) {
+        cameraInputRef.current.remove();
+        cameraInputRef.current = null;
+      }
+      if (galleryInputRef.current) {
+        galleryInputRef.current.remove();
+        galleryInputRef.current = null;
       }
     };
   }, []);
 
-  const capture = useCallback((): Promise<CameraResult | null> => {
+  const capture = useCallback((mode: CaptureMode = 'camera'): Promise<CameraResult | null> => {
     return new Promise((resolve) => {
       resolveRef.current = resolve;
+
+      const inputRef = mode === 'camera' ? cameraInputRef : galleryInputRef;
 
       if (!inputRef.current) {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/*';
-        input.capture = 'environment';
+        if (mode === 'camera') {
+          input.capture = 'environment';
+        }
+        // Gallery mode: no capture attribute, so the OS shows the full file picker
         input.style.display = 'none';
         document.body.appendChild(input);
         inputRef.current = input;
