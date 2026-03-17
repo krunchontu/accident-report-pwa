@@ -40,7 +40,7 @@ SG Accident Kaki is a well-architected, offline-first PWA that successfully impl
 All 10 spec success criteria are met or nearly met:
 - **8-step accident wizard**: Triage → Scene → Photos → Other Party → Eligibility → Witnesses → Sketch → Injuries → Summary
 - **26 photo prompts** with GPS + compass metadata, thumbnail generation, category grouping
-- **31-rule eligibility scorer** — clean pure function, green/amber/red scoring with plain-English consequences
+- **27-rule eligibility scorer** — clean pure function, green/amber/red scoring with plain-English consequences
 - **Foreign vehicle module** — comprehensive: nationality, VEP, Autopass, border insurance types, claims agent, hit-and-run
 - **Canvas accident sketch** — 5 road templates, 5 drawing tools (pen, car A/B, arrow, impact X), undo/clear
 - **Deadline tracker** — all 8 post-accident deadlines with real-time countdown
@@ -172,13 +172,11 @@ The following issues from REVIEW.md v1 have been correctly fixed:
 - **Current deployment:** Netlify (auto-deploys from branch)
 - **Impact:** No automated quality gate. Broken code can ship to production.
 
-### BAD-010: `npm install` Still Requires `--legacy-peer-deps`
-- **Severity:** Medium (DX friction)
+### BAD-010: Peer Dependency Conflict Resolved via `.npmrc` Workaround
+- **Severity:** Low (mitigated)
 - **Root cause:** `@tailwindcss/vite@^4.2.1` peer dependency conflict
-- **While documented in README**, this is a dependency management issue that should be resolved, not just documented. Options:
-  - Pin compatible versions
-  - Add `.npmrc` with `legacy-peer-deps=true`
-  - Migrate to a compatible peer dep version
+- **Current state:** `.npmrc` with `legacy-peer-deps=true` is committed — `npm install` works without flags
+- **Ideally:** Resolve at source by pinning compatible versions or waiting for upstream fix
 
 ---
 
@@ -290,7 +288,7 @@ The following issues from REVIEW.md v1 have been correctly fixed:
 | 6 | User-visible save failure notifications | 0.5 day | Data loss prevention |
 | 7 | CI/CD pipeline (GitHub Actions: lint, type-check, test, build) | 0.5 day | Quality gate |
 | 8 | Image compression before IndexedDB storage | 1 day | Storage quota |
-| 9 | Fix `npm install` peer dep conflict (add `.npmrc`) | 5 min | DX friction |
+| 9 | Resolve peer dep conflict at source (`.npmrc` workaround already in place) | 1 hour | DX friction |
 
 ### P2 — Medium (Post-GA Enhancement)
 
