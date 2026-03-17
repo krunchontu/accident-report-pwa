@@ -5,8 +5,7 @@ export const EMERGENCY_CONTACTS = [
   { label: "Traffic Police e-Services", url: "https://www.police.gov.sg", type: "link" as const },
   { label: "SAS Portal (GIA)", url: "https://www.gia.org.sg", type: "link" as const },
   { label: "LTA / OneMotoring", url: "https://www.onemotoring.lta.gov.sg", type: "link" as const },
-  { label: "Motor Claims Framework", url: "https://www.gia.org.sg", type: "link" as const },
+  { label: "Motor Claims Framework", url: "https://gia.org.sg/motor-insurance/22-premium-renewal-of-policy/348-motor-claims-framework.html", type: "link" as const },
   { label: "FIDReC (insurance disputes)", url: "https://www.fidrec.com.sg", number: "63278878", type: "both" as const },
-  { label: "MIB Singapore (uninsured claims)", url: "https://www.mib.com.sg", type: "link" as const },
-  { label: "Malaysian MIB (MMIB)", url: "https://www.mib.org.my", type: "link" as const },
+  { label: "MIB Singapore (uninsured claims)", url: "https://www.mibos.com.sg/", type: "link" as const },
 ] as const;
