@@ -15,10 +15,11 @@ After a traffic accident in Singapore you have **24 hours** to file a Singapore 
 - **Photo capture** — 26 prompted shots (13 required, 13 optional) covering wide-angle scene, vehicle damage, plates, licences, IDs, insurance certs, road markings, dashcam stills, and injuries; GPS and compass metadata stamped on every image; auto-scrolls to next required prompt after each capture
 - **Other party details** — driver info, vehicle registration, insurer & policy, visible damage; full **foreign vehicle** sub-form (nationality, VEP, Autopass, border insurance, Malaysian MIB)
 - **Eligibility self-check** — 27 scoring rules (licence validity, insurance status, alcohol/drugs, named driver, vehicle mods, etc.) scored as green / amber / red with plain-English consequences; auto-populates answers from your saved profile
+- **Reporter profile snapshot** — your personal, vehicle, and insurance details are captured from your profile into each incident at creation time, included in the summary, PDF export, and saved records
 - **Witness capture** — name, contact, free-text statement
 - **Accident sketch** — canvas with 5 road templates and 5 drawing tools (pen, Car A, Car B, directional arrow, impact X marker), undo/clear with confirmation
 - **Injury & passenger log** — seatbelt/child-seat status, hospital name, per-passenger injury notes
-- **Summary & signatures** — review all data, capture driver + other-party signatures, generate PDF, share
+- **Summary & signatures** — review all data including your own details (auto-filled from profile), capture driver + other-party signatures, generate PDF, share
 
 ### Deadline Tracker
 Countdown timers for every post-accident obligation:
@@ -37,7 +38,7 @@ Countdown timers for every post-accident obligation:
 ### Records & Export
 - View past incidents with eligibility badges (green/amber/red)
 - Full incident detail view with all captured data
-- **PDF export** — multi-page report (scene, photos, other party, eligibility, witnesses, sketch, signatures)
+- **PDF export** — multi-page report (scene, your details, photos, other party, eligibility, witnesses, sketch, signatures)
 - **Share** — Web Share API integration
 
 ### Reference

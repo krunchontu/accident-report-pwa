@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { db } from '../db/database';
-import type { Incident, OtherParty, Witness, DeadlineStatus } from '../types/incident';
+import type { Incident, OtherParty, Witness, DeadlineStatus, ReporterSnapshot } from '../types/incident';
 import type { EligibilityCheck } from '../types/eligibility';
 import { DEADLINES } from '../constants/deadlines';
 
@@ -55,6 +55,7 @@ function createNewIncident(): Incident {
     sketchDataUrl: null,
     driverSignature: null, otherPartySignature: null,
     deadlines, additionalNotes: '',
+    reporter: null,
   };
 }
 
@@ -62,7 +63,7 @@ interface AccidentState {
   currentIncident: Incident | null;
   currentStep: number;
   lastRoute: string | null;
-  startNewIncident: () => Promise<Incident>;
+  startNewIncident: (reporter?: ReporterSnapshot | null) => Promise<Incident>;
   loadIncident: (id: string) => Promise<void>;
   updateScene: (updates: Partial<Incident['scene']>) => void;
   updateTriage: (updates: Partial<Incident['triage']>) => void;
@@ -92,8 +93,9 @@ export const useAccidentStore = create<AccidentState>()(
     currentStep: 0,
     lastRoute: null,
 
-    startNewIncident: async () => {
+    startNewIncident: async (reporter?) => {
       const incident = createNewIncident();
+      if (reporter) incident.reporter = reporter;
       await db.incidents.put(incident);
       set((state) => { state.currentIncident = incident; state.currentStep = 0; });
       return incident;

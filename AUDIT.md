@@ -8,7 +8,7 @@
 
 ## EXECUTIVE SUMMARY
 
-**Overall Grade: B+ (82/100)**
+**Overall Grade: B+ (83/100)**
 
 SG Accident Kaki is a well-architected, offline-first PWA that successfully implements a complex 8-step accident documentation wizard for Singapore drivers. The core functionality is complete and the codebase demonstrates good TypeScript discipline. However, significant gaps remain in testing, accessibility, security hardening, and component library maturity that prevent it from reaching production-grade quality.
 
@@ -23,7 +23,7 @@ SG Accident Kaki is a well-architected, offline-first PWA that successfully impl
 | Testing | 0/10 | Zero test files |
 | Security | 5/10 | No encryption, no CSP, basic validation only |
 | Performance | 8/10 | Good lazy loading, debounced saves |
-| Documentation | 7/10 | Good README, stale REVIEW.md version |
+| Documentation | 8/10 | Good README, accurate REVIEW.md |
 | Error Resilience | 6/10 | Root boundary exists, per-route missing |
 
 ---
@@ -44,7 +44,7 @@ All 10 spec success criteria are met or nearly met:
 - **Foreign vehicle module** — comprehensive: nationality, VEP, Autopass, border insurance types, claims agent, hit-and-run
 - **Canvas accident sketch** — 5 road templates, 5 drawing tools (pen, car A/B, arrow, impact X), undo/clear
 - **Deadline tracker** — all 8 post-accident deadlines with real-time countdown
-- **PDF export** — covers all sections including sketch and signatures
+- **PDF export** — covers all sections including reporter's own details, sketch, and signatures
 - **Web Share API** integration for distributing reports
 - **Witness/passenger flow** — separate 3-step reduced flow (per spec)
 - **Resume functionality** — returns to last wizard step, not triage
@@ -75,6 +75,7 @@ All 10 spec success criteria are met or nearly met:
 - **Insurance expiry warning** shown within 30 days
 - **Profile incomplete prompt** when critical fields missing
 - **Eligibility auto-population** from saved profile — reduces data entry under stress
+- **Reporter profile snapshot** — personal, vehicle, and insurance details auto-captured into each incident at creation, displayed in Summary, PDF export, and saved records
 - **Photo auto-scroll** to next uncaptured required prompt after each capture
 - **Exit confirmation dialog** prevents accidental wizard abandonment
 
@@ -94,6 +95,7 @@ The following issues from REVIEW.md v1 have been correctly fixed:
 - ✅ BAD-008: `saveToDb` error handling added (try/catch + console.error)
 - ✅ BAD-009: Resume navigates to last visited step
 - ✅ BUG-B03: Eligibility calculations memoized on HomeScreen
+- ✅ Profile data included in incident: Reporter snapshot (personal/vehicle/insurance) captured at incident creation, displayed in Summary, PDF export, and IncidentDetail
 
 ---
 

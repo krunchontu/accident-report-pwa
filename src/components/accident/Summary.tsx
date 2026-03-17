@@ -89,6 +89,21 @@ export function Summary() {
           </div>
         </div>
 
+        {/* Reporter (Your Details) */}
+        {incident.reporter && (
+          <div className="bg-white rounded-xl p-4 border border-gray-200 space-y-1">
+            <h3 className="font-semibold text-navy">Your Details</h3>
+            <div className="text-sm space-y-1">
+              <div><span className="text-gray-500">Name:</span> {incident.reporter.fullName}</div>
+              <div><span className="text-gray-500">NRIC/FIN:</span> {incident.reporter.nricFin}</div>
+              <div><span className="text-gray-500">Contact:</span> {incident.reporter.contactNumber}</div>
+              <div><span className="text-gray-500">Licence:</span> {incident.reporter.licenceNumber} (Class {incident.reporter.licenceClass})</div>
+              <div><span className="text-gray-500">Vehicle:</span> {incident.reporter.vehicleRegistration} — {incident.reporter.vehicleMakeModel}</div>
+              <div><span className="text-gray-500">Insurer:</span> {incident.reporter.insurerName} — {incident.reporter.policyNumber}</div>
+            </div>
+          </div>
+        )}
+
         {/* Other parties */}
         {incident.otherParties.length > 0 && (
           <div className="bg-white rounded-xl p-4 border border-gray-200 space-y-2">
