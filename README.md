@@ -103,6 +103,19 @@ src/
 └── utils/                 # PDF export, eligibility scorer, date helpers, share helper, photo metadata
 ```
 
+## SEO & Security
+
+The app includes production-ready SEO and security hardening:
+
+- **Structured data** — `WebApplication` and `FAQPage` JSON-LD schemas for Google rich snippets
+- **Open Graph / Twitter Cards** — custom 1200x630 social sharing image with branding
+- **Geo targeting** — Singapore-specific meta tags (`geo.region`, coordinates) for local search
+- **Security headers** — CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy (configured in `netlify.toml`)
+- **PWA shortcuts** — long-press app icon for "Report New Accident", "View Past Reports", "Emergency Numbers"
+- **Google Search Console** — verified with sitemap submission
+
+See [MARKETING_STRATEGY_SG.md](MARKETING_STRATEGY_SG.md) for the full zero-budget marketing plan.
+
 ## Getting Started
 
 ```bash
