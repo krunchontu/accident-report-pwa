@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://reportaccident.netlify.app/sitemap.xml
