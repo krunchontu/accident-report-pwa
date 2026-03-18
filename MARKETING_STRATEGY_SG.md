@@ -1,17 +1,35 @@
 # SG Accident Kaki — Zero-Budget Marketing Strategy for Singapore
 
-## Technical SEO (Already Implemented)
+## Technical SEO (Implemented)
 
 - [x] Descriptive meta description with SG-specific keywords
 - [x] Open Graph tags (for sharing on Facebook, WhatsApp, Telegram)
 - [x] Twitter Card tags
 - [x] JSON-LD structured data (WebApplication schema, price: free)
+- [x] JSON-LD FAQPage schema (targets Google rich snippets for SAS/GIA queries)
 - [x] robots.txt + sitemap.xml
-- [x] PWA manifest with proper metadata
+- [x] PWA manifest with categories, shortcuts, and lang/scope
 - [x] Keyword-optimized title tag
+- [x] Geo meta tags (`geo.region: SG`, coordinates, `ICBM`)
+- [x] Enhanced robots directive (`max-snippet:-1, max-image-preview:large`)
+- [x] Custom OG image (1200x630 SVG with branding and tagline)
+
+### Security Headers (Implemented in `netlify.toml`)
+
+- [x] Content-Security-Policy (restricts scripts, styles, images, connections)
+- [x] X-Content-Type-Options: nosniff
+- [x] X-Frame-Options: DENY (prevents clickjacking)
+- [x] Referrer-Policy: strict-origin-when-cross-origin
+- [x] Permissions-Policy (camera and geolocation restricted to self)
+
+### PWA Manifest Enhancements
+
+- [x] `categories`: productivity, utilities, lifestyle
+- [x] `shortcuts`: Report New Accident, View Past Reports, Emergency Numbers (long-press app icon)
+- [x] `lang: en-SG`, `id`, `scope`, `dir`
 
 ### SEO Next Steps
-- **Google Search Console**: Register your Netlify domain and submit sitemap.xml
+- [x] Register on Google Search Console, submit sitemap
 - **Target keywords**: "singapore accident report app", "SAS filing app", "car accident singapore what to do", "GIA claim singapore", "motor accident report form singapore"
 - **Create a landing page blog post** on your site explaining the 24-hour SAS filing rule — this is the #1 thing people Google after an accident
 
@@ -107,11 +125,15 @@ These can be blog posts on your site or social media content.
 
 ## Quick Wins Checklist
 
-1. [ ] Register on Google Search Console, submit sitemap
-2. [ ] Post on r/singapore
-3. [ ] Post on HardwareZone Car Talk
-4. [ ] Share in 3-5 Facebook driver groups
-5. [ ] Create one TikTok/Reel about the 24-hour rule
-6. [ ] Ask 10 friends to share the link in their WhatsApp groups
-7. [ ] LinkedIn post about building the app
-8. [ ] Create a proper OG image (1200x630px) — currently using the app icon, a custom image with a tagline would perform better for social sharing
+1. [x] Register on Google Search Console, submit sitemap
+2. [x] Create a proper OG image (1200x630) with branding and tagline
+3. [x] Add FAQPage structured data for Google rich snippets
+4. [x] Add security headers (CSP, X-Frame-Options, etc.)
+5. [x] Enhance PWA manifest (shortcuts, categories)
+6. [x] Add geo meta tags for Singapore local search
+7. [ ] Post on r/singapore
+8. [ ] Post on HardwareZone Car Talk
+9. [ ] Share in 3-5 Facebook driver groups
+10. [ ] Create one TikTok/Reel about the 24-hour rule
+11. [ ] Ask 10 friends to share the link in their WhatsApp groups
+12. [ ] LinkedIn post about building the app
