@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sg-accident-kaki.netlify.app/sitemap.xml
