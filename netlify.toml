@@ -28,3 +28,13 @@
   for = "/manifest.webmanifest"
   [headers.values]
     Content-Type = "application/manifest+json"
+
+# Security & SEO headers for all pages
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(self), geolocation=(self), microphone=()"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://nominatim.openstreetmap.org; connect-src 'self' https://nominatim.openstreetmap.org; font-src 'self'; frame-ancestors 'none'"

@@ -7,6 +7,12 @@
     <meta name="theme-color" content="#1B2A4A" />
     <meta name="description" content="Free accident reporting app for Singapore drivers. Document motor vehicle accidents on-site, take geotagged photos, check GIA eligibility, and file your Singapore Accident Statement within 24 hours. Works offline." />
     <meta name="keywords" content="Singapore accident report, motor accident Singapore, SAS filing, Singapore Accident Statement, car accident app, GIA claim, traffic accident documentation, accident report form Singapore" />
+    <meta name="geo.region" content="SG" />
+    <meta name="geo.placename" content="Singapore" />
+    <meta name="geo.position" content="1.3521;103.8198" />
+    <meta name="ICBM" content="1.3521, 103.8198" />
+    <meta name="language" content="en-SG" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
 
     <!-- Open Graph -->
@@ -14,17 +20,19 @@
     <meta property="og:title" content="SG Accident Kaki — Free Accident Report App for Singapore Drivers" />
     <meta property="og:description" content="Document motor vehicle accidents on-site with guided photo capture, GIA eligibility checks, deadline tracking, and PDF export. Works offline. 100% free." />
     <meta property="og:url" content="https://reportaccident.netlify.app/" />
-    <meta property="og:image" content="https://reportaccident.netlify.app/icons/icon-512x512.png" />
+    <meta property="og:image" content="https://reportaccident.netlify.app/og-image.svg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="en_SG" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="SG Accident Kaki — Free Accident Report App for SG Drivers" />
     <meta name="twitter:description" content="Step-by-step accident documentation, geotagged photos, GIA eligibility scoring, and PDF reports. Works offline. Made for Singapore." />
-    <meta name="twitter:image" content="https://reportaccident.netlify.app/icons/icon-512x512.png" />
+    <meta name="twitter:image" content="https://reportaccident.netlify.app/og-image.svg" />
     <link rel="canonical" href="https://reportaccident.netlify.app/" />
 
-    <!-- Structured Data -->
+    <!-- Structured Data: WebApplication -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -44,6 +52,48 @@
         "@type": "Country",
         "name": "Singapore"
       }
+    }
+    </script>
+
+    <!-- Structured Data: FAQPage (targets Google rich snippets) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is the 24-hour rule for accident reporting in Singapore?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "In Singapore, you must file a Singapore Accident Statement (SAS) with your insurer within 24 hours of a motor vehicle accident, even if you are not at fault. Failure to do so may affect your insurance claim."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What should I do immediately after a car accident in Singapore?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Check for injuries and call 995 (ambulance) or 999 (police) if needed. Exchange particulars with the other driver, take photos of the scene, vehicle damage, and road conditions. Use the SG Accident Kaki app to document everything step by step."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is GIA and how does it affect my accident claim?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "GIA (General Insurance Association of Singapore) manages motor accident claims. If your accident meets GIA eligibility criteria, you can claim through an approved workshop. SG Accident Kaki includes a 27-rule eligibility checker to help you assess your claim."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I use SG Accident Kaki offline?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. SG Accident Kaki is a Progressive Web App (PWA) that works fully offline. All data is stored locally on your device. You can document an accident even without internet and export or share your report later."
+          }
+        }
+      ]
     }
     </script>
 
